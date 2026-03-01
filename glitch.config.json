@@ -1,0 +1,23 @@
+{
+	"name": "glitch-dev",
+	"processes": [
+		{
+			"id": "random_logs",
+			"command": "bun scripts/random-logs.ts --interval 500 --error-rate 0.25",
+			"cwd": ".",
+			"env": {}
+		},
+		{
+			"id": "marathon_ai",
+			"command": "bun scripts/marathon-logs.ts --interval 850 --error-rate 0.18",
+			"cwd": ".",
+			"env": {}
+		}
+	],
+	"modules": {
+		"logger": {
+			"enabled": true,
+			"retention_days": 14
+		}
+	}
+}
