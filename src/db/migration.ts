@@ -1,4 +1,4 @@
-import type { DbClient } from '#src/agent/db/client';
+import type { DbClient } from '#src/db/client';
 
 export interface Migration {
 	key: string;
@@ -23,20 +23,19 @@ export class Migrator {
 			`);
 
 			for (const migration of migrations) {
-				const existing = this.db.get<{ key: string }>(
-					'SELECT key FROM glitch_migrations WHERE key = ?',
-					[migration.key],
-				);
+				const existing = this.db.get<{ key: string }>('SELECT key FROM glitch_migrations WHERE key = ?', [
+					migration.key,
+				]);
 
 				if (existing) {
 					continue;
 				}
 
 				migration.apply(this.db);
-				this.db.run(
-					'INSERT INTO glitch_migrations (key, apply_date) VALUES (?, ?)',
-					[migration.key, new Date().toISOString()],
-				);
+				this.db.run('INSERT INTO glitch_migrations (key, apply_date) VALUES (?, ?)', [
+					migration.key,
+					new Date().toISOString(),
+				]);
 			}
 		});
 	}
@@ -53,19 +52,16 @@ export class Migrator {
 			`);
 
 			for (const migration of reversedMigrations) {
-				const existing = this.db.get<{ key: string }>(
-					'SELECT key FROM glitch_migrations WHERE key = ?',
-					[migration.key],
-				);
+				const existing = this.db.get<{ key: string }>('SELECT key FROM glitch_migrations WHERE key = ?', [
+					migration.key,
+				]);
 
 				if (!existing) {
 					continue;
 				}
 
 				migration.revert(this.db);
-				this.db.run('DELETE FROM glitch_migrations WHERE key = ?', [
-					migration.key,
-				]);
+				this.db.run('DELETE FROM glitch_migrations WHERE key = ?', [migration.key]);
 			}
 		});
 	}

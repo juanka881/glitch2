@@ -8,12 +8,14 @@
     "test": "bun test",
     "fmt": "biome format --write",
     "lint": "biome lint --write",
-    "make:agent": "bun build --compile ./src/agent/main.ts --outfile ./dist/glx",
+    "make:agent": "bun run ./scripts/make.ts ./src/agent/main.ts ./dist/glx",
+    "make:monitor": "bun run ./scripts/make.ts ./src/monitor/main.ts ./dist/glw",
     "premake": "bun fmt && bun lint && bun check && bun test",
-    "make": "bun make:agent",
-    "glx": "bun make:agent && ./dist/glx"
+    "make": "bun make:agent && bun make:monitor"
   },
   "dependencies": {
+    "@logtape/logtape": "^2.0.4",
+    "pretty-ms": "^9.3.0",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },

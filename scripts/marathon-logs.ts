@@ -49,8 +49,7 @@ function main() {
 		const speaker = pick(speakers);
 		const channel = pick(channels);
 		const fragment = pick(fragments);
-		const severity =
-			Math.random() < errorRate ? 'error' : pick(['info', 'warn', 'debug']);
+		const severity = Math.random() < errorRate ? 'error' : pick(['info', 'warn', 'debug']);
 		const signal = randomInt(12, 99);
 		const threat = randomInt(0, 5);
 		const line = `[${speaker}] channel=${channel} severity=${severity} signal=${signal} threat=${threat} ${fragment}`;

@@ -1,9 +1,5 @@
-import {
-	spawn,
-	spawnSync,
-	type ChildProcessWithoutNullStreams,
-} from 'node:child_process';
-import type { ProcessDefinition } from '#src/agent/app/supervisor/shapes';
+import childProcess, { type ChildProcessWithoutNullStreams } from 'node:child_process';
+import type { ProcessDefinition } from '#src/agent/app/supervisor/supervisor-shapes';
 
 export interface ProcessOutputStream {
 	on(event: 'data', listener: (chunk: Buffer | string) => void): unknown;
@@ -14,10 +10,7 @@ export interface ManagedChildProcess {
 	stdout: ProcessOutputStream;
 	stderr: ProcessOutputStream;
 	on(event: 'error', listener: (error: unknown) => void): void;
-	on(
-		event: 'exit',
-		listener: (exitCode: number | null, signal: NodeJS.Signals | null) => void,
-	): void;
+	on(event: 'exit', listener: (exitCode: number | null, signal: NodeJS.Signals | null) => void): void;
 }
 
 export interface ProcessManager {
@@ -29,7 +22,7 @@ export class NodeProcessManager implements ProcessManager {
 	spawn(processDefinition: ProcessDefinition) {
 		const { file, args } = createShellLaunch(processDefinition.command);
 
-		return spawn(file, args, {
+		return childProcess.spawn(file, args, {
 			cwd: processDefinition.cwd,
 			env: {
 				...process.env,
@@ -43,7 +36,7 @@ export class NodeProcessManager implements ProcessManager {
 	stop(pid: number) {
 		try {
 			if (process.platform === 'win32') {
-				spawnSync('taskkill', ['/pid', String(pid), '/t', '/f'], {
+				childProcess.spawnSync('taskkill', ['/pid', String(pid), '/t', '/f'], {
 					stdio: 'ignore',
 				});
 				return;

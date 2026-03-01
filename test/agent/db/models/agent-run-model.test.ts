@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { AgentRunModel } from '#src/agent/db/models/agent-run-model';
+import { AgentRunModel } from '#src/db/agent/models/agent-run-model';
 
 test('AgentRunModel constructs from valid fields', () => {
 	const model = new AgentRunModel({

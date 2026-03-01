@@ -1,6 +1,6 @@
 # Discovery and Registry
 
-Status: `proposed`
+Status: `implemented`
 
 ## Problem
 
@@ -21,6 +21,32 @@ Without a shared discovery layer, the user would need to manually provide projec
 - let the UI connect directly to a live agent when available
 - let the UI fall back to the per-project database for historical data
 - support a long-running local monitor process for UI hosting and registry cleanup
+
+## Implementation Status
+
+This feature is implemented in the current codebase.
+
+Shipped scope:
+
+- per-project telemetry now uses `<project_root>/.glitch/agent.glitch`
+- the shared registry database now lives at `<glitch_home>/registry.glitch`
+- agent boot registers projects and agents in the registry database
+- agent lifecycle updates the registry on start, running, ping, fail, and exit
+- registry rows persist `end_date` and `error`
+- project rows persist `add_date`, `last_ping_date`, and `latest_agent_id`
+- registry schema and models live under `src/db/registry/*`
+- shared registry repo and service live under `src/shared/registry/*`
+- shared runtime utilities live under `src/shared/utils/*`
+- shared database helpers live under `src/db/*`
+- the monitor shell now lives under `src/monitor/*`
+- `glw serve` runs a minimal placeholder HTTP host and periodic stale-agent cleanup
+- `glw`, `glw status`, and `glw stop` manage monitor startup and metadata through `monitor.json`
+
+Current limitations:
+
+- the agent still advertises a `base_url` before a real agent API exists
+- the monitor currently serves a placeholder HTTP response instead of the future embedded UI bundle
+- idle self-termination for the monitor is still deferred
 
 ## Non-Goals
 
@@ -69,17 +95,18 @@ Suggested contents:
 
 Project-local contents:
 
-- `<project_root>/.glitch/id`
 - `<project_root>/.glitch/agent.glitch`
 
 ## Shared Database Layout
 
 The codebase should support two database implementations under a shared top-level database folder:
 
+- `src/db/client.ts`
+- `src/db/migration.ts`
 - `src/db/agent/*`
 - `src/db/registry/*`
 
-The current `src/agent/db/*` code should move into `src/db/agent/*`.
+The previous `src/agent/db/*` implementation has been moved into the shared `src/db/*` layout.
 
 Reason:
 
@@ -114,6 +141,7 @@ Notes:
 
 - a project row should be created on first agent startup for that project
 - if the project already exists, the row should be updated
+- the project id is created when the row is first inserted and then reused through `cwd_hash`
 - `add_date` records when the project was first seen by Glitch and does not change afterward
 - `last_ping_date` should be set when the project is first added and updated on every agent ping
 - `latest_agent_id` remains null until an agent reaches `running`
@@ -176,11 +204,11 @@ Each agent should pick a random localhost port in the range `18000` to `28000`.
 Suggested startup flow:
 
 1. bootstrap the agent
-2. load project config and project id from `<project_root>/.glitch/id`
+2. load project config
 3. ensure the project agent database exists at `<project_root>/.glitch/agent.glitch`
 4. ensure the home registry exists at `<home>/.glitch/registry.glitch`
 5. run registry migrations if needed
-6. insert or update the `projects` row
+6. insert or update the `projects` row and resolve the project id from it
 7. set `last_ping_date`
 8. insert the `agents` row with `status = start`
 9. start the local API on `http://127.0.0.1:<port>`
@@ -237,7 +265,7 @@ Responsibilities:
 - read historical project data from per-project agent databases when agents are offline
 - run periodic registry cleanup for stale agent rows
 
-For this phase, the monitor is only a shell. The future web UI bundle will eventually be built and embedded into the monitor binary so it can be served directly from memory.
+For this phase, the monitor is still only a shell. The future web UI bundle will eventually be built and embedded into the monitor binary so it can be served directly from memory.
 
 ## Monitor Lifecycle
 

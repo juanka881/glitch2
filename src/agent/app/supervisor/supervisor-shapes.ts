@@ -74,7 +74,4 @@ export interface ProcessExitEvent {
 	signal?: string;
 }
 
-export type SupervisorEvent =
-	| ProcessStartEvent
-	| ProcessOutputEvent
-	| ProcessExitEvent;
+export type SupervisorEvent = ProcessStartEvent | ProcessOutputEvent | ProcessExitEvent;

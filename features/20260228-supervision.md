@@ -33,7 +33,7 @@ Shipped scope:
 
 Current implementation notes:
 
-- project ids are persisted locally at `<project_root>/.glitch/id`
+- project ids are resolved from the shared registry database by `cwd_hash`
 - all new ids use UUIDv7 via the `uuid` package
 - the agent startup preamble prints the agent version and configured process list before launch
 - process output is line-oriented and emitted as complete lines
@@ -228,7 +228,7 @@ Suggested event contract:
 ## Lifecycle
 
 1. Agent starts and loads `glitch.config.json`
-2. Agent reads or creates `<project_root>/.glitch/id`
+2. Agent resolves the project id from the shared registry
 3. Agent creates an `agent_run`
 4. Agent spawns each configured process
 5. Agent creates a `process_run` for each spawned process

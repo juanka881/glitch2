@@ -1,10 +1,7 @@
-import type { DbClient } from '#src/agent/db/client';
-import type {
-	AgentRunStatus,
-	ProcessStatus,
-} from '#src/agent/app/supervisor/shapes';
-import { AgentRunModel } from '#src/agent/db/models/agent-run-model';
-import { ProcessRunModel } from '#src/agent/db/models/process-run-model';
+import type { DbClient } from '#src/db/client';
+import type { AgentRunStatus, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
+import { AgentRunModel } from '#src/db/agent/models/agent-run-model';
+import { ProcessRunModel } from '#src/db/agent/models/process-run-model';
 
 interface CreateAgentRunInput {
 	id: string;
@@ -107,22 +104,14 @@ export class SupervisorRepo {
 					error = ?
 				WHERE id = ?
 			`,
-			[
-				input.status,
-				input.end_date ?? null,
-				this.serializeJson(input.error ?? null),
-				input.id,
-			],
+			[input.status, input.end_date ?? null, this.serializeJson(input.error ?? null), input.id],
 		);
 
 		return this.getAgentRunById(input.id);
 	}
 
 	getAgentRunById(id: string) {
-		const row = this.db.get<AgentRunRow>(
-			'SELECT * FROM agent_runs WHERE id = ?',
-			[id],
-		);
+		const row = this.db.get<AgentRunRow>('SELECT * FROM agent_runs WHERE id = ?', [id]);
 
 		if (!row) {
 			throw new Error(`Agent run not found: ${id}`);
@@ -141,15 +130,7 @@ export class SupervisorRepo {
 					id, agent_run_id, process_id, command, cwd, pid, start_date, end_date, exit_code, signal, status
 				) VALUES (?, ?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, ?)
 			`,
-			[
-				input.id,
-				input.agent_run_id,
-				input.process_id,
-				input.command,
-				input.cwd,
-				input.start_date,
-				input.status,
-			],
+			[input.id, input.agent_run_id, input.process_id, input.command, input.cwd, input.start_date, input.status],
 		);
 
 		return this.getProcessRunById(input.id);
@@ -180,10 +161,7 @@ export class SupervisorRepo {
 	}
 
 	getProcessRunById(id: string) {
-		const row = this.db.get<ProcessRunRow>(
-			'SELECT * FROM process_runs WHERE id = ?',
-			[id],
-		);
+		const row = this.db.get<ProcessRunRow>('SELECT * FROM process_runs WHERE id = ?', [id]);
 
 		if (!row) {
 			throw new Error(`Process run not found: ${id}`);

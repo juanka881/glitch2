@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { ProcessRunModel } from '#src/agent/db/models/process-run-model';
+import { ProcessRunModel } from '#src/db/agent/models/process-run-model';
 
 test('ProcessRunModel constructs from valid fields', () => {
 	const model = new ProcessRunModel({

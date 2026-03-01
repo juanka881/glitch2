@@ -18,11 +18,7 @@ let lineCount = 0;
 let timer: Timer | null = null;
 
 function main() {
-	writeLine(
-		'info',
-		'glitch',
-		`random log generator started interval=${intervalMs}ms error_rate=${errorRate}`,
-	);
+	writeLine('info', 'glitch', `random log generator started interval=${intervalMs}ms error_rate=${errorRate}`);
 
 	timer = setInterval(() => {
 		lineCount += 1;
@@ -32,8 +28,7 @@ function main() {
 		const requestId = createRequestId();
 		const durationMs = randomInt(5, 1200);
 		const statusCode = randomInt(200, 599);
-		const level =
-			Math.random() < errorRate ? 'error' : pick(['info', 'debug', 'warn']);
+		const level = Math.random() < errorRate ? 'error' : pick(['info', 'debug', 'warn']);
 		const line = `level=${level} category=${category} request_id=${requestId} status=${statusCode} duration_ms=${durationMs} msg="${message}"`;
 
 		writeLine(level, category, line);
@@ -53,11 +48,7 @@ function shutdown() {
 		timer = null;
 	}
 
-	writeLine(
-		'info',
-		'glitch',
-		`random log generator stopped lines=${lineCount}`,
-	);
+	writeLine('info', 'glitch', `random log generator stopped lines=${lineCount}`);
 	process.exit(0);
 }
 

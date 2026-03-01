@@ -54,11 +54,11 @@ Each feature folder under `src/<runtime>/app/<feature>` should follow the same i
 
 Expected files:
 
-- `repo.ts`
+- `<feature>-repo.ts`
   - all data access for the feature
-- `service.ts`
+- `<feature>-service.ts`
   - high-level feature API such as `new SupervisorService()` or `supervisor.startProcess()`
-- `shapes.ts`
+- `<feature>-shapes.ts`
   - feature-local types, enums, and data or record classes
 
 Rules:
@@ -72,13 +72,13 @@ Rules:
 There is no API implementation yet, but if a feature exposes HTTP endpoints later it should use:
 
 - `src/<runtime>/app/<feature>/http/router.ts`
-- `src/<runtime>/app/<feature>/http/shapes.ts`
+- `src/<runtime>/app/<feature>/http/<feature>-http-shapes.ts`
 
 Rules:
 
 - module shapes and API shapes should be separate
 - internal feature shapes must not be reused as public API transport shapes
-- API `shapes.ts` is only for request and response contracts
+- API `<feature>-http-shapes.ts` is only for request and response contracts
 - this applies to both `src/agent/*` and `src/monitor/*`
 
 ## Database Layout
@@ -87,12 +87,35 @@ Database code should live under `src/db`.
 
 Expected structure:
 
+- `src/db/client.ts`
+  - shared SQLite client wrapper
+- `src/db/migration.ts`
+  - shared migration runner
 - `src/db/agent/*`
-  - per-project agent database client, migrations, and models
+  - per-project agent database migrations and models
 - `src/db/registry/*`
-  - registry database client, migrations, and models
+  - registry database migrations and models
 
 On boot, the agent and monitor should initialize the database(s) they need through this layer and apply migrations before feature services start running.
+
+## Shared Runtime Helpers
+
+Cross-runtime helpers that are not specific to a single feature should live under `src/shared`.
+
+Examples:
+
+- `src/shared/utils/glitch-home.ts`
+- `src/shared/utils/base-url.ts`
+- `src/shared/utils/shutdown-manager.ts`
+- `src/shared/registry/registry-repo.ts`
+- `src/shared/registry/registry-service.ts`
+- `src/shared/build.ts`
+
+Build metadata rules:
+
+- shared build metadata helpers should live under `src/shared/build.ts`
+- binaries should read version and commit from build-time constants such as `BUILD_VERSION` and `BUILD_COMMIT`
+- runtime code should not read `package.json` directly to determine binary version metadata
 
 ## Migration Rules
 
@@ -155,16 +178,19 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - use `snake_case` only for JSON payload fields, database column names, and DTO or model properties that mirror persisted contract names
 - prefer singular class names such as `SupervisorService`, `LoggerRepo`, and `AgentRunModel`
 - prefer equivalent naming in monitor code such as `RegistryService`, `MonitorServerService`, and `RegistryAgentModel`
+- when there are two or more variables of the same kind in scope, use consistent descriptive names such as `agentMigrator` and `registryMigrator` instead of mixing a generic name with a specific one
+- group related lines together and use blank lines to separate distinct phases of logic
 
 ### Imports
 
-- prefer explicit named imports over namespace imports
 - keep imports grouped by runtime dependency first, then local project imports
 - keep import blocks compact with no extra blank lines between import statements
 - order imports as built-in runtime imports first, then package imports, then project imports
+- for Node built-ins, prefer namespace-style imports such as `import path from 'node:path'` and `import fsp from 'node:fs/promises'`
 - use package subpath imports such as `#src/...` and `#test/...` instead of deep relative paths like `../../..`
 - avoid circular imports between services, repos, models, and shapes
 - feature modules should depend downward on shared/db code, not sideways on another feature's internals
+- prefer named exports in application code; avoid default exports
 
 ### Services
 
@@ -173,9 +199,11 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - a service may coordinate repos, models, and other infrastructure dependencies
 - a service should not embed raw SQL or direct database access
 - when a service depends on runtime infrastructure such as process spawning, filesystem coordination, or transport behavior, prefer an interface-backed dependency instead of passing loose functions
+- prefer logger-based output through `getLogger()` and LogTape for application logging; use `console.log(...)` only when intentionally writing directly to the console surface
 - declare class properties with the other fields and assign them in the constructor
 - avoid constructor parameter properties such as `constructor(private readonly repo: Repo) {}`
 - avoid inline collection or object initializers for class state; initialize them in the constructor instead
+- if graceful shutdown behavior is reusable, place it under `src/shared/utils` instead of embedding it in a single runtime entrypoint
 
 ### Repos
 
@@ -185,7 +213,7 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 
 ### Shapes and Models
 
-- `shapes.ts` is for feature-local domain types, enums, and record classes
+- `<feature>-shapes.ts` is for feature-local domain types, enums, and record classes
 - `db/models/*` is for table-backed persisted models
 - keep transport-specific API shapes separate from internal shapes
 - when a concept exists both in persistence and in transport, define separate classes or schemas for each layer
@@ -198,6 +226,9 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - avoid dense inline transformations that are hard to scan
 - when a mapping or conversion has real logic, assign it to a local variable before returning
 - avoid reconstructing the same object shape just to pass it into a constructor again
+- when a callsite becomes hard to scan, break it into intermediate variables instead of nesting transformations inline
+- prefer extracting non-trivial event payloads into named variables before passing them into `emit(...)`
+- use `Promise.allSettled(...)` by default when coordinating multiple async operations that should all be awaited; use `Promise.all(...)` only for special cases
 
 ## Testing Conventions
 
@@ -239,6 +270,7 @@ Use Bun's `test` function for tests.
 
 Rules:
 
+- name test files after the source file they cover, for example `supervisor-service.test.ts` or `registry-service.test.ts`
 - prefer flat tests and avoid nesting or grouping unless it is genuinely necessary
 - the test file already acts as the natural grouping boundary in most cases
 - use `assert` style assertions instead of `expect`
@@ -272,18 +304,16 @@ Keep this structure visually obvious in the test body so tests stay easy to scan
 ## Storage Model
 
 - Project telemetry data lives in `<project_root>/.glitch/agent.glitch`
-- The project id currently lives at `<project_root>/.glitch/id`
 - Global discovery data and shared settings live in `<home>/.glitch/`
 - The registry database lives at `<home>/.glitch/registry.glitch`
 - The home directory stores discovery state and monitor metadata, not the primary project telemetry dataset
 
 Current project id rule:
 
-- create the project id on first run if `<project_root>/.glitch/id` does not exist
-- persist it to that file and reuse it on future runs
+- create the project id on first registry insertion for the project
+- look up the existing project by `cwd_hash` and reuse its id on future runs
 - use UUIDv7 for project ids and other new ids
 - use the `uuid` package `v7()` implementation for UUIDv7 generation
-- this is a temporary local-only mechanism until project identity is also managed from the shared registry
 - code that works with the Glitch home directory should accept it as an explicit input when practical so tests can override the default `<home>/.glitch` location with a temporary directory
 
 ## Data Contract Conventions

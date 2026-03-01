@@ -1,31 +1,29 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { migrations } from '#src/db/agent/migrations';
+import { migrations } from '#src/db/registry/migrations';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
 
-test('applyMigrations creates the supervision schema', () => {
+test('registry migrations create the registry schema', () => {
 	const db = DbClient.memory();
 
 	try {
 		const migrator = new Migrator(db);
 		migrator.apply(migrations);
 
-		const agentRuns = db.get<{ name: string }>(
-			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'agent_runs'",
+		const projects = db.get<{ name: string }>(
+			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'projects'",
 		);
-		const processRuns = db.get<{ name: string }>(
-			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'process_runs'",
-		);
+		const agents = db.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'agents'");
 
-		assert(agentRuns?.name === 'agent_runs', 'agent_runs table must exist');
-		assert(processRuns?.name === 'process_runs', 'process_runs table must exist');
+		assert(projects?.name === 'projects', 'projects table must exist');
+		assert(agents?.name === 'agents', 'agents table must exist');
 	} finally {
 		db.close();
 	}
 });
 
-test('applyMigrations is idempotent', () => {
+test('registry migrations are idempotent', () => {
 	const db = DbClient.memory();
 
 	try {
@@ -34,6 +32,7 @@ test('applyMigrations is idempotent', () => {
 		migrator.apply(migrations);
 
 		const applied = db.get<{ total: number }>('SELECT COUNT(*) AS total FROM glitch_migrations');
+
 		assert(applied?.total === 1, 'migration should be recorded only once');
 	} finally {
 		db.close();

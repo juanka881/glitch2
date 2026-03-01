@@ -2,20 +2,13 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { test } from 'bun:test';
-import type {
-	ManagedChildProcess,
-	ProcessManager,
-} from '#src/agent/app/supervisor/process-manager';
-import {
-	AgentRunStatus,
-	ProcessDefinition,
-	ProcessStatus,
-} from '#src/agent/app/supervisor/shapes';
-import { SupervisorRepo } from '#src/agent/app/supervisor/repo';
-import { SupervisorService } from '#src/agent/app/supervisor/service';
-import { DbClient } from '#src/agent/db/client';
-import { Migrator } from '#src/agent/db/migration';
-import { migrations } from '#src/agent/db/migrations';
+import type { ManagedChildProcess, ProcessManager } from '#src/agent/app/supervisor/process-manager';
+import { AgentRunStatus, ProcessDefinition, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
+import { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
+import { SupervisorService } from '#src/agent/app/supervisor/supervisor-service';
+import { migrations } from '#src/db/agent/migrations';
+import { DbClient } from '#src/db/client';
+import { Migrator } from '#src/db/migration';
 
 class FakeChildProcess extends EventEmitter implements ManagedChildProcess {
 	pid?: number;
@@ -98,8 +91,7 @@ function createService() {
 }
 
 test('SupervisorService starts a process, emits events, and persists run state', async () => {
-	const { db, repo, service, stdoutChunks, stderrChunks, processManager } =
-		createService();
+	const { db, repo, service, stdoutChunks, stderrChunks, processManager } = createService();
 
 	try {
 		const events: string[] = [];
@@ -113,6 +105,7 @@ test('SupervisorService starts a process, emits events, and persists run state',
 		});
 
 		await service.start({
+			agentId: '11111111-1111-7111-8111-111111111111',
 			projectId: '11111111-1111-4111-8111-111111111111',
 			projectName: 'demo',
 			cwd: 'C:/demo',
@@ -139,9 +132,7 @@ test('SupervisorService starts a process, emits events, and persists run state',
 
 		await exitPromise;
 
-		const storedProcessRun = repo.listProcessRunsByAgentRunId(
-			service.getAgentRun()!.id,
-		)[0];
+		const storedProcessRun = repo.listProcessRunsByAgentRunId(service.getAgentRun()!.id)[0];
 
 		assert(events.includes('process.start'), 'process.start must be emitted');
 		assert(events.includes('process.stdout'), 'process.stdout must be emitted');
@@ -157,10 +148,7 @@ test('SupervisorService starts a process, emits events, and persists run state',
 			stderrChunks.some((chunk) => chunk.includes('stderr-line')),
 			'stderr must be forwarded',
 		);
-		assert(
-			storedProcessRun?.status === ProcessStatus.Exit,
-			'process run must finish with exit status',
-		);
+		assert(storedProcessRun?.status === ProcessStatus.Exit, 'process run must finish with exit status');
 	} finally {
 		await service.shutdown();
 		db.close();
@@ -180,6 +168,7 @@ test('SupervisorService stops a process and records stop status', async () => {
 		});
 
 		await service.start({
+			agentId: '11111111-1111-7111-8111-111111111111',
 			projectId: '11111111-1111-4111-8111-111111111111',
 			projectName: 'demo',
 			cwd: 'C:/demo',
@@ -198,18 +187,10 @@ test('SupervisorService stops a process and records stop status', async () => {
 		assert(exitPromise, 'process exit promise must exist');
 		await exitPromise;
 
-		const storedProcessRun = repo.listProcessRunsByAgentRunId(
-			service.getAgentRun()!.id,
-		)[0];
+		const storedProcessRun = repo.listProcessRunsByAgentRunId(service.getAgentRun()!.id)[0];
 
-		assert(
-			exitStatuses.includes(ProcessStatus.Stop),
-			'process exit event must record stop status',
-		);
-		assert(
-			storedProcessRun?.status === ProcessStatus.Stop,
-			'process run must finish with stop status',
-		);
+		assert(exitStatuses.includes(ProcessStatus.Stop), 'process exit event must record stop status');
+		assert(storedProcessRun?.status === ProcessStatus.Stop, 'process run must finish with stop status');
 	} finally {
 		await service.shutdown();
 		db.close();
@@ -221,6 +202,7 @@ test('SupervisorService records agent failure details', async () => {
 
 	try {
 		await service.start({
+			agentId: '11111111-1111-7111-8111-111111111111',
 			projectId: '11111111-1111-4111-8111-111111111111',
 			projectName: 'demo',
 			cwd: 'C:/demo',
@@ -235,10 +217,7 @@ test('SupervisorService records agent failure details', async () => {
 			stack: string | null;
 		};
 
-		assert(
-			failedRun.status === AgentRunStatus.Fail,
-			'agent run status must become fail',
-		);
+		assert(failedRun.status === AgentRunStatus.Fail, 'agent run status must become fail');
 		assert(errorPayload.name === 'Error', 'error name must be captured');
 		assert(errorPayload.message === 'boom', 'error message must be captured');
 	} finally {

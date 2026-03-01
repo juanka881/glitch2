@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { ProcessDefinition } from '#src/agent/app/supervisor/shapes';
+import { ProcessDefinition } from '#src/agent/app/supervisor/supervisor-shapes';
 
 test('ProcessDefinition constructs from valid fields', () => {
 	const definition = new ProcessDefinition({

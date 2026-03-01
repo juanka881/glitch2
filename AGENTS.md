@@ -56,7 +56,7 @@ Common commands:
 
 ```sh
 bun test
-bun run typecheck
+bun run check
 bun run format
 bun run lint
 ```

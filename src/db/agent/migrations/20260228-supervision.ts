@@ -1,5 +1,5 @@
-import type { DbClient } from '#src/agent/db/client';
-import type { Migration } from '#src/agent/db/migration';
+import type { DbClient } from '#src/db/client';
+import type { Migration } from '#src/db/migration';
 
 function apply(db: DbClient) {
 	db.run(`

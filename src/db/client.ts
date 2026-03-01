@@ -14,9 +14,7 @@ export class DbClient {
 	}
 
 	static memory() {
-		return new DbClient(
-			new Database(':memory:', { create: true, strict: true }),
-		);
+		return new DbClient(new Database(':memory:', { create: true, strict: true }));
 	}
 
 	run(sql: string, params?: SqlParams) {

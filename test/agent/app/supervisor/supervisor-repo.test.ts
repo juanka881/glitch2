@@ -1,13 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import {
-	AgentRunStatus,
-	ProcessStatus,
-} from '#src/agent/app/supervisor/shapes';
-import { SupervisorRepo } from '#src/agent/app/supervisor/repo';
-import { DbClient } from '#src/agent/db/client';
-import { migrations } from '#src/agent/db/migrations';
-import { Migrator } from '#src/agent/db/migration';
+import { AgentRunStatus, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
+import { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
+import { migrations } from '#src/db/agent/migrations';
+import { DbClient } from '#src/db/client';
+import { Migrator } from '#src/db/migration';
 
 function createRepo() {
 	const db = DbClient.memory();
@@ -62,11 +59,7 @@ test('SupervisorRepo.updateAgentRun updates status and error', () => {
 		});
 
 		assert(updated.status === 'fail', 'agent run status must update');
-		assert.deepEqual(
-			updated.error,
-			{ message: 'boom' },
-			'agent run error must update',
-		);
+		assert.deepEqual(updated.error, { message: 'boom' }, 'agent run error must update');
 	} finally {
 		db.close();
 	}
@@ -86,14 +79,9 @@ test('SupervisorRepo.getAgentRunById returns a persisted run', () => {
 			status: AgentRunStatus.Start,
 		});
 
-		const agentRun = repo.getAgentRunById(
-			'11111111-1111-4111-8111-111111111111',
-		);
+		const agentRun = repo.getAgentRunById('11111111-1111-4111-8111-111111111111');
 
-		assert(
-			agentRun.id === '11111111-1111-4111-8111-111111111111',
-			'agent run must be fetched',
-		);
+		assert(agentRun.id === '11111111-1111-4111-8111-111111111111', 'agent run must be fetched');
 	} finally {
 		db.close();
 	}
@@ -190,9 +178,7 @@ test('SupervisorRepo.getProcessRunById returns a persisted process run', () => {
 			status: ProcessStatus.Init,
 		});
 
-		const processRun = repo.getProcessRunById(
-			'33333333-3333-4333-8333-333333333333',
-		);
+		const processRun = repo.getProcessRunById('33333333-3333-4333-8333-333333333333');
 
 		assert(processRun.process_id === 'web', 'process run must be fetched');
 	} finally {
@@ -234,15 +220,10 @@ test('SupervisorRepo.listProcessRunsByAgentRunId returns ordered process runs', 
 			status: ProcessStatus.Init,
 		});
 
-		const processRuns = repo.listProcessRunsByAgentRunId(
-			'11111111-1111-4111-8111-111111111111',
-		);
+		const processRuns = repo.listProcessRunsByAgentRunId('11111111-1111-4111-8111-111111111111');
 
 		assert(processRuns.length === 2, 'process runs must be listed');
-		assert(
-			processRuns[1]?.process_id === 'worker',
-			'process runs must remain ordered by start_date',
-		);
+		assert(processRuns[1]?.process_id === 'worker', 'process runs must remain ordered by start_date');
 	} finally {
 		db.close();
 	}

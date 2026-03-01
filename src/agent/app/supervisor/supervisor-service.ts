@@ -1,4 +1,5 @@
-import { EOL } from 'node:os';
+import os from 'node:os';
+import util from 'node:util';
 import { v7 as uuidv7 } from 'uuid';
 import {
 	AgentRunStatus,
@@ -9,21 +10,19 @@ import {
 	type ProcessOutputEvent,
 	type ProcessStartEvent,
 	type SupervisorEvent,
-} from '#src/agent/app/supervisor/shapes';
-import type {
-	ManagedChildProcess,
-	ProcessManager,
-} from '#src/agent/app/supervisor/process-manager';
+} from '#src/agent/app/supervisor/supervisor-shapes';
+import type { ManagedChildProcess, ProcessManager } from '#src/agent/app/supervisor/process-manager';
 import { NodeProcessManager } from '#src/agent/app/supervisor/process-manager';
-import type { SupervisorRepo } from '#src/agent/app/supervisor/repo';
-import type { AgentRunModel } from '#src/agent/db/models/agent-run-model';
-import type { ProcessRunModel } from '#src/agent/db/models/process-run-model';
+import type { AgentRunModel } from '#src/db/agent/models/agent-run-model';
+import type { ProcessRunModel } from '#src/db/agent/models/process-run-model';
+import type { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
 
 interface WritableLike {
 	write(chunk: string): unknown;
 }
 
 interface StartSupervisorInput {
+	agentId: string;
 	projectId: string;
 	projectName: string;
 	cwd: string;
@@ -55,12 +54,7 @@ export class SupervisorService {
 	private agentRun: AgentRunModel | null;
 	private isStopping: boolean;
 
-	constructor(
-		repo: SupervisorRepo,
-		stdout?: WritableLike,
-		stderr?: WritableLike,
-		processManager?: ProcessManager,
-	) {
+	constructor(repo: SupervisorRepo, stdout?: WritableLike, stderr?: WritableLike, processManager?: ProcessManager) {
 		this.repo = repo;
 		this.stdout = stdout ?? process.stdout;
 		this.stderr = stderr ?? process.stderr;
@@ -83,7 +77,7 @@ export class SupervisorService {
 		const startDate = new Date().toISOString();
 
 		this.agentRun = this.repo.createAgentRun({
-			id: uuidv7(),
+			id: input.agentId,
 			project_id: input.projectId,
 			project_name: input.projectName,
 			cwd: input.cwd,
@@ -162,14 +156,16 @@ export class SupervisorService {
 			pid: child.pid,
 		});
 
-		this.emit({
+		const startEvent: ProcessStartEvent = {
 			name: 'process.start',
 			process_run_id: runningProcessRun.id,
 			process_id: runningProcessRun.process_id,
 			pid: child.pid,
 			status: ProcessStatus.Running,
 			start_date: runningProcessRun.start_date,
-		} satisfies ProcessStartEvent);
+		};
+
+		this.emit(startEvent);
 
 		child.stdout.on('data', (chunk) => {
 			this.handleStreamData(managedProcess, 'stdout', chunk.toString());
@@ -186,14 +182,16 @@ export class SupervisorService {
 				end_date: new Date().toISOString(),
 			});
 
-			this.emit({
+			const exitEvent: ProcessExitEvent = {
 				name: 'process.exit',
 				process_run_id: failedRun.id,
 				process_id: failedRun.process_id,
 				pid: child.pid,
 				status: ProcessStatus.Fail,
 				end_date: failedRun.end_date ?? new Date().toISOString(),
-			} satisfies ProcessExitEvent);
+			};
+
+			this.emit(exitEvent);
 
 			this.managedProcesses.delete(processDefinition.id);
 			rejectExit(error);
@@ -202,9 +200,7 @@ export class SupervisorService {
 		child.on('exit', (exitCode, signal) => {
 			this.flushBufferedLines(managedProcess);
 
-			const status = managedProcess.stopRequested
-				? ProcessStatus.Stop
-				: ProcessStatus.Exit;
+			const status = managedProcess.stopRequested ? ProcessStatus.Stop : ProcessStatus.Exit;
 			const finishedRun = this.repo.updateProcessRun({
 				id: processRun.id,
 				status,
@@ -213,7 +209,7 @@ export class SupervisorService {
 				signal: signal ?? null,
 			});
 
-			this.emit({
+			const exitEvent: ProcessExitEvent = {
 				name: 'process.exit',
 				process_run_id: finishedRun.id,
 				process_id: finishedRun.process_id,
@@ -222,7 +218,9 @@ export class SupervisorService {
 				end_date: finishedRun.end_date ?? new Date().toISOString(),
 				exit_code: finishedRun.exit_code ?? undefined,
 				signal: finishedRun.signal ?? undefined,
-			} satisfies ProcessExitEvent);
+			};
+
+			this.emit(exitEvent);
 
 			this.managedProcesses.delete(processDefinition.id);
 			resolveExit(finishedRun);
@@ -250,11 +248,10 @@ export class SupervisorService {
 		}
 
 		this.isStopping = true;
-		await Promise.all(
-			[...this.managedProcesses.keys()].map((processId) =>
-				this.stopProcess(processId),
-			),
-		);
+		const processIds = [...this.managedProcesses.keys()];
+		const stopPromises = processIds.map((processId) => this.stopProcess(processId));
+
+		await Promise.allSettled(stopPromises);
 
 		if (this.agentRun) {
 			this.agentRun = this.repo.updateAgentRun({
@@ -277,11 +274,10 @@ export class SupervisorService {
 			error: toErrorPayload(error),
 		});
 
-		await Promise.all(
-			[...this.managedProcesses.keys()].map((processId) =>
-				this.stopProcess(processId),
-			),
-		);
+		const processIds = [...this.managedProcesses.keys()];
+		const stopPromises = processIds.map((processId) => this.stopProcess(processId));
+
+		await Promise.allSettled(stopPromises);
 
 		return this.agentRun;
 	}
@@ -303,11 +299,7 @@ export class SupervisorService {
 		return this.agentRun;
 	}
 
-	private handleStreamData(
-		managedProcess: ManagedProcess,
-		stream: 'stdout' | 'stderr',
-		chunk: string,
-	) {
+	private handleStreamData(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', chunk: string) {
 		managedProcess.buffers[stream] += chunk;
 		const lines = managedProcess.buffers[stream].split(/\r?\n/);
 		managedProcess.buffers[stream] = lines.pop() ?? '';
@@ -329,22 +321,20 @@ export class SupervisorService {
 		}
 	}
 
-	private emitProcessLine(
-		managedProcess: ManagedProcess,
-		stream: 'stdout' | 'stderr',
-		line: string,
-	) {
+	private emitProcessLine(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', line: string) {
 		const captureDate = new Date().toISOString();
-		const processStream =
-			stream === 'stdout' ? ProcessStream.Stdout : ProcessStream.Stderr;
+		const processStream = stream === 'stdout' ? ProcessStream.Stdout : ProcessStream.Stderr;
+		const processName = util.styleText('blue', managedProcess.processId);
+		const streamLabel = stream === 'stdout' ? util.styleText('gray', 'OUT') : util.styleText('red', 'ERR');
+		const consoleLine = `${processName} ${streamLabel} ${line}${os.EOL}`;
 
 		if (stream === 'stdout') {
-			this.stdout.write(`${line}${EOL}`);
+			this.stdout.write(consoleLine);
 		} else {
-			this.stderr.write(`${line}${EOL}`);
+			this.stderr.write(consoleLine);
 		}
 
-		this.emit({
+		const outputEvent: ProcessOutputEvent = {
 			name: stream === 'stdout' ? 'process.stdout' : 'process.stderr',
 			process_run_id: managedProcess.processRunId,
 			process_id: managedProcess.processId,
@@ -352,7 +342,9 @@ export class SupervisorService {
 			stream: processStream,
 			capture_date: captureDate,
 			line,
-		} satisfies ProcessOutputEvent);
+		};
+
+		this.emit(outputEvent);
 	}
 
 	private emit(event: SupervisorEvent) {
