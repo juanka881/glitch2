@@ -23,14 +23,13 @@ export interface BootstrapMonitorRuntime {
 export async function bootstrapMonitor(glitchHome?: string): Promise<BootstrapMonitorRuntime> {
 	const resolvedGlitchHome = await ensureGlitchHome(glitchHome);
 	const registryPath = path.resolve(resolvedGlitchHome, 'registry.glitch');
-	const lockPath = path.resolve(resolvedGlitchHome, 'monitor.lock.json');
 	const registryDb = DbClient.open(registryPath);
 	const registryMigrator = new Migrator(registryDb);
 	registryMigrator.apply(registryMigrations);
 
 	const registryRepo = new RegistryRepo(registryDb);
 	const registry = new RegistryService(registryRepo);
-	const monitorRepo = new MonitorRepo(lockPath);
+	const monitorRepo = new MonitorRepo(resolvedGlitchHome);
 	const processManager = new NodeMonitorProcessManager();
 	const monitor = new MonitorService(monitorRepo, registry, processManager);
 

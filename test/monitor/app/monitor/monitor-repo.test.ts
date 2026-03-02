@@ -25,8 +25,7 @@ async function createStoredLock(repo: MonitorRepo): Promise<MonitorLock> {
 
 test('MonitorRepo acquires and reads monitor lock state', async () => {
 	const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'glitch-monitor-repo-'));
-	const lockPath = path.join(tempDir, 'monitor.lock.json');
-	const repo = new MonitorRepo(lockPath);
+	const repo = new MonitorRepo(tempDir);
 
 	try {
 		const monitorLock = await createStoredLock(repo);
@@ -42,8 +41,7 @@ test('MonitorRepo acquires and reads monitor lock state', async () => {
 
 test('MonitorRepo acquires lock exclusively', async () => {
 	const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'glitch-monitor-repo-'));
-	const lockPath = path.join(tempDir, 'monitor.lock.json');
-	const repo = new MonitorRepo(lockPath);
+	const repo = new MonitorRepo(tempDir);
 
 	try {
 		const firstWriter = await repo.acquireLock();
@@ -69,8 +67,7 @@ test('MonitorRepo acquires lock exclusively', async () => {
 
 test('MonitorRepo removes monitor lock state', async () => {
 	const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'glitch-monitor-repo-'));
-	const lockPath = path.join(tempDir, 'monitor.lock.json');
-	const repo = new MonitorRepo(lockPath);
+	const repo = new MonitorRepo(tempDir);
 
 	try {
 		await createStoredLock(repo);
@@ -86,11 +83,13 @@ test('MonitorRepo removes monitor lock state', async () => {
 
 test('MonitorRepo returns undefined for an incomplete lock file', async () => {
 	const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'glitch-monitor-repo-'));
-	const lockPath = path.join(tempDir, 'monitor.lock.json');
-	const repo = new MonitorRepo(lockPath);
+	const lockPath = path.join(tempDir, 'monitor.lock');
+	const statePath = path.join(tempDir, 'monitor.state.json');
+	const repo = new MonitorRepo(tempDir);
 
 	try {
-		await fsp.writeFile(lockPath, '{"pid": 12345', 'utf-8');
+		await fsp.writeFile(lockPath, '', 'utf-8');
+		await fsp.writeFile(statePath, '{"pid": 12345', 'utf-8');
 
 		const stored = await repo.readLock();
 

@@ -293,5 +293,4 @@ Terminal emulation features such as switching between process views are explicit
 ## Follow-Up Work
 
 - connect the logger module to supervision events for persistent line capture
-- add discovery registration so active agents can be found by the UI
 - decide whether restart policies belong in supervision v2 or a separate runtime feature

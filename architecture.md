@@ -45,8 +45,7 @@ Expected structure:
 
 Examples:
 
-- `src/monitor/app/registry`
-- `src/monitor/app/server`
+- `src/monitor/app/monitor`
 
 Rules:
 
@@ -320,7 +319,8 @@ Keep this structure visually obvious in the test body so tests stay easy to scan
 - Project telemetry data lives in `<project_root>/.glitch/agent.glitch`
 - Global discovery data and shared settings live in `<home>/.glitch/`
 - The registry database lives at `<home>/.glitch/registry.glitch`
-- Monitor lock state lives at `<home>/.glitch/monitor.lock.json`
+- Monitor lock ownership lives at `<home>/.glitch/monitor.lock`
+- Monitor state metadata lives at `<home>/.glitch/monitor.state.json`
 - The home directory stores discovery state and monitor metadata, not the primary project telemetry dataset
 
 Current project id rule:
@@ -352,7 +352,7 @@ Examples:
 - use `project_name`, not `projectName`
 - use `start_date`, not `started_at`
 - use `end_date`, not `ended_at`
-- use `last_seen_date`, not `lastSeenAt`
+- use `last_ping_date`, not `lastPingDate`
 - use `api_base_url`, not `apiBaseUrl`
 - use `process.start`, not `process.started`
 - use `process.exit`, not `process.exited`

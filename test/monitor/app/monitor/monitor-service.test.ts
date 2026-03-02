@@ -68,8 +68,7 @@ async function createService(): Promise<{
 	processManager: FakeMonitorProcessManager;
 }> {
 	const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'glitch-monitor-service-'));
-	const lockPath = path.join(tempDir, 'monitor.lock.json');
-	const repo = new MonitorRepo(lockPath);
+	const repo = new MonitorRepo(tempDir);
 	const processManager = new FakeMonitorProcessManager();
 	const registry = createRegistry();
 	const service = new MonitorService(repo, registry, processManager);

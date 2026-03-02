@@ -12,27 +12,23 @@ async function main(): Promise<void> {
 	const command = Bun.argv[2] ?? 'start';
 	const runtime = await bootstrapMonitor();
 
-	try {
-		switch (command) {
-			case 'serve': {
-				await handleMonitorServe(runtime, version);
-				return;
-			}
-			case 'status': {
-				await handleMonitorStatus(runtime);
-				return;
-			}
-			case 'stop': {
-				await handleMonitorStop(runtime);
-				return;
-			}
-			default: {
-				await handleMonitorStart(runtime);
-				return;
-			}
+	switch (command) {
+		case 'serve': {
+			await handleMonitorServe(runtime, version);
+			return;
 		}
-	} finally {
-		runtime.registryDb.close();
+		case 'status': {
+			await handleMonitorStatus(runtime);
+			return;
+		}
+		case 'stop': {
+			await handleMonitorStop(runtime);
+			return;
+		}
+		default: {
+			await handleMonitorStart(runtime);
+			return;
+		}
 	}
 }
 
