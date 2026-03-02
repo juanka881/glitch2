@@ -33,7 +33,7 @@ test('registry migrations are idempotent', () => {
 
 		const applied = db.get<{ total: number }>('SELECT COUNT(*) AS total FROM glitch_migrations');
 
-		assert(applied?.total === 1, 'migration should be recorded only once');
+		assert(applied?.total === migrations.length, 'each registry migration should be recorded only once');
 	} finally {
 		db.close();
 	}

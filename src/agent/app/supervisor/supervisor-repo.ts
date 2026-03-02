@@ -73,7 +73,7 @@ export class SupervisorRepo {
 		this.db = db;
 	}
 
-	createAgentRun(input: CreateAgentRunInput) {
+	createAgentRun(input: CreateAgentRunInput): AgentRunModel {
 		this.db.run(
 			`
 				INSERT INTO agent_runs (
@@ -95,7 +95,7 @@ export class SupervisorRepo {
 		return this.getAgentRunById(input.id);
 	}
 
-	updateAgentRun(input: UpdateAgentRunInput) {
+	updateAgentRun(input: UpdateAgentRunInput): AgentRunModel {
 		this.db.run(
 			`
 				UPDATE agent_runs
@@ -110,7 +110,7 @@ export class SupervisorRepo {
 		return this.getAgentRunById(input.id);
 	}
 
-	getAgentRunById(id: string) {
+	getAgentRunById(id: string): AgentRunModel {
 		const row = this.db.get<AgentRunRow>('SELECT * FROM agent_runs WHERE id = ?', [id]);
 
 		if (!row) {
@@ -123,7 +123,7 @@ export class SupervisorRepo {
 		});
 	}
 
-	createProcessRun(input: CreateProcessRunInput) {
+	createProcessRun(input: CreateProcessRunInput): ProcessRunModel {
 		this.db.run(
 			`
 				INSERT INTO process_runs (
@@ -136,7 +136,7 @@ export class SupervisorRepo {
 		return this.getProcessRunById(input.id);
 	}
 
-	updateProcessRun(input: UpdateProcessRunInput) {
+	updateProcessRun(input: UpdateProcessRunInput): ProcessRunModel {
 		this.db.run(
 			`
 				UPDATE process_runs
@@ -160,7 +160,7 @@ export class SupervisorRepo {
 		return this.getProcessRunById(input.id);
 	}
 
-	getProcessRunById(id: string) {
+	getProcessRunById(id: string): ProcessRunModel {
 		const row = this.db.get<ProcessRunRow>('SELECT * FROM process_runs WHERE id = ?', [id]);
 
 		if (!row) {
@@ -170,7 +170,7 @@ export class SupervisorRepo {
 		return new ProcessRunModel(row);
 	}
 
-	listProcessRunsByAgentRunId(agentRunId: string) {
+	listProcessRunsByAgentRunId(agentRunId: string): ProcessRunModel[] {
 		const rows = this.db.all<ProcessRunRow>(
 			'SELECT * FROM process_runs WHERE agent_run_id = ? ORDER BY start_date ASC',
 			[agentRunId],
@@ -179,7 +179,7 @@ export class SupervisorRepo {
 		return rows.map((row) => new ProcessRunModel(row));
 	}
 
-	private serializeJson(value: unknown) {
+	private serializeJson(value: unknown): string | null {
 		if (value === null) {
 			return null;
 		}

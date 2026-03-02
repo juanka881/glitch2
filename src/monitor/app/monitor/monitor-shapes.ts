@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export class MonitorProcess {
+export class MonitorLock {
 	static schema = z.object({
 		pid: z.number().int().positive(),
 		base_url: z.string().min(1),
@@ -14,7 +14,24 @@ export class MonitorProcess {
 	readonly version!: string;
 
 	constructor(fields: unknown) {
-		const parsed = MonitorProcess.schema.parse(fields);
+		const parsed = MonitorLock.schema.parse(fields);
+		Object.assign(this, parsed);
+	}
+}
+
+export class MonitorStatus {
+	static schema = MonitorLock.schema.extend({
+		healthy: z.boolean(),
+	});
+
+	readonly pid!: number;
+	readonly base_url!: string;
+	readonly start_date!: string;
+	readonly version!: string;
+	readonly healthy!: boolean;
+
+	constructor(fields: unknown) {
+		const parsed = MonitorStatus.schema.parse(fields);
 		Object.assign(this, parsed);
 	}
 }

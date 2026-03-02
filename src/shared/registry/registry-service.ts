@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { v7 as uuidv7 } from 'uuid';
+import type { ProjectModel } from '#src/db/registry/models/project-model';
+import type { RegistryAgentModel } from '#src/db/registry/models/registry-agent-model';
 import type { RegistryRepo } from '#src/shared/registry/registry-repo';
 import { RegistryAgentStatus } from '#src/shared/registry/registry-shapes';
 
@@ -51,7 +53,7 @@ export class RegistryService {
 		this.repo = repo;
 	}
 
-	ensureProject(input: EnsureProjectInput) {
+	ensureProject(input: EnsureProjectInput): ProjectModel {
 		const cwdHash = hashCwd(input.cwd);
 		const existingProject = this.repo.getProjectByCwdHash(cwdHash);
 		const projectId = existingProject?.id ?? uuidv7();
@@ -66,7 +68,7 @@ export class RegistryService {
 		});
 	}
 
-	registerAgentStart(input: RegisterAgentStartInput) {
+	registerAgentStart(input: RegisterAgentStartInput): RegistryAgentModel {
 		return this.repo.createAgent({
 			id: input.agentId,
 			projectId: input.projectId,
@@ -79,7 +81,7 @@ export class RegistryService {
 		});
 	}
 
-	markAgentRunning(input: UpdateAgentRunningInput) {
+	markAgentRunning(input: UpdateAgentRunningInput): RegistryAgentModel {
 		this.repo.updateProjectLatestAgent({
 			id: input.projectId,
 			latestAgentId: input.agentId,
@@ -96,7 +98,7 @@ export class RegistryService {
 		});
 	}
 
-	pingAgent(input: PingAgentInput) {
+	pingAgent(input: PingAgentInput): RegistryAgentModel {
 		this.repo.updateProjectPing({
 			id: input.projectId,
 			lastPingDate: input.pingDate,
@@ -109,7 +111,7 @@ export class RegistryService {
 		});
 	}
 
-	markAgentExit(input: ExitAgentInput) {
+	markAgentExit(input: ExitAgentInput): RegistryAgentModel {
 		return this.repo.updateAgent({
 			id: input.agentId,
 			status: RegistryAgentStatus.Exit,
@@ -118,7 +120,7 @@ export class RegistryService {
 		});
 	}
 
-	markAgentFail(input: FailAgentInput) {
+	markAgentFail(input: FailAgentInput): RegistryAgentModel {
 		return this.repo.updateAgent({
 			id: input.agentId,
 			status: RegistryAgentStatus.Fail,
@@ -127,12 +129,12 @@ export class RegistryService {
 		});
 	}
 
-	markCrashedAgents(cutoffDate: string, crashDate: string) {
+	markCrashedAgents(cutoffDate: string, crashDate: string): void {
 		this.repo.markStaleAgentsAsCrash(cutoffDate, crashDate);
 	}
 }
 
-function hashCwd(cwd: string) {
+function hashCwd(cwd: string): string {
 	const normalizedCwd = path.normalize(path.resolve(cwd)).toLowerCase();
 
 	return crypto.createHash('sha256').update(normalizedCwd).digest('hex').toUpperCase();

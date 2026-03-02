@@ -40,7 +40,7 @@ Shipped scope:
 - shared database helpers live under `src/db/*`
 - the monitor shell now lives under `src/monitor/*`
 - `glw serve` runs a minimal placeholder HTTP host and periodic stale-agent cleanup
-- `glw`, `glw status`, and `glw stop` manage monitor startup and metadata through `monitor.json`
+- `glw`, `glw status`, and `glw stop` manage monitor startup and metadata through `monitor.lock.json`
 
 Current limitations:
 
@@ -90,7 +90,7 @@ Global directory:
 Suggested contents:
 
 - `registry.glitch`
-- `monitor.json`
+- `monitor.lock.json`
 - `settings.json`
 
 Project-local contents:
@@ -283,11 +283,11 @@ For this phase, the monitor is still only a shell. The future web UI bundle will
 
 Monitor bootstrap behavior:
 
-1. check `<home>/.glitch/monitor.json`
+1. check `<home>/.glitch/monitor.lock.json`
 2. if the recorded pid exists, reuse that monitor
 3. if it is alive, open a browser to its recorded URL
 4. if it is not alive, start `glw serve`
-5. the serving monitor updates `monitor.json` with its pid and port
+5. the serving monitor acquires `monitor.lock.json` with exclusive access and writes its pid and port
 
 The self-termination behavior after one minute of inactivity is deferred for later.
 
@@ -330,7 +330,7 @@ This keeps the browser-side UI simple and gives the monitor one place to normali
 - clean shutdown stops the ping timer before final registry updates
 - failure writes `error` to both the project database and the registry database
 - monitor cleanup marks stale non-exit agents as `crash`
-- monitor reuses an existing live `glw` instance when `monitor.json` points to a valid pid
+- monitor reuses an existing live `glw` instance when `monitor.lock.json` points to a valid pid
 - monitor starts a new `glw serve` instance when no valid monitor is running
 - historical project browsing works without a live agent
 
@@ -346,7 +346,7 @@ Port selection should use this policy:
 
 ## Monitor Metadata
 
-`monitor.json` should currently contain:
+`monitor.lock.json` should currently contain:
 
 - `pid` integer
 - `base_url` string

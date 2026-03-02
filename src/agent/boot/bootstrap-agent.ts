@@ -7,13 +7,25 @@ import { migrations } from '#src/db/agent/migrations';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
 import { migrations as registryMigrations } from '#src/db/registry/migrations';
-import { loadConfig } from '#src/agent/boot/load-config';
+import { loadConfig, type GlitchConfig } from '#src/agent/boot/load-config';
 import { RegistryRepo } from '#src/shared/registry/registry-repo';
 import { RegistryService } from '#src/shared/registry/registry-service';
 import { reserveBaseUrl } from '#src/shared/utils/base-url';
 import { ensureGlitchHome } from '#src/shared/utils/glitch-home';
 
-export async function bootstrapAgent(cwd: string, glitchHome?: string) {
+export interface BootstrapAgentRuntime {
+	agentId: string;
+	baseUrl: string;
+	config: GlitchConfig;
+	glitchHome: string;
+	agentDb: DbClient;
+	registryDb: DbClient;
+	repo: SupervisorRepo;
+	registry: RegistryService;
+	supervisor: SupervisorService;
+}
+
+export async function bootstrapAgent(cwd: string, glitchHome?: string): Promise<BootstrapAgentRuntime> {
 	const config = await loadConfig(cwd);
 	const agentId = uuidv7();
 	const resolvedGlitchHome = await ensureGlitchHome(glitchHome);
@@ -31,25 +43,19 @@ export async function bootstrapAgent(cwd: string, glitchHome?: string) {
 	const registryMigrator = new Migrator(registryDb);
 	registryMigrator.apply(registryMigrations);
 
-	const repo = new SupervisorRepo(agentDb);
-	const supervisor = new SupervisorService(repo);
+	const supervisorRepo = new SupervisorRepo(agentDb);
+	const supervisor = new SupervisorService(supervisorRepo);
 	const registryRepo = new RegistryRepo(registryDb);
 	const registry = new RegistryService(registryRepo);
-	const project = registry.ensureProject({
-		name: config.name,
-		cwd,
-		pingDate: new Date().toISOString(),
-	});
 
 	return {
 		agentId,
 		baseUrl,
 		config,
-		projectId: project.id,
 		glitchHome: resolvedGlitchHome,
 		agentDb,
 		registryDb,
-		repo,
+		repo: supervisorRepo,
 		registry,
 		supervisor,
 	};

@@ -4,7 +4,7 @@ const MIN_PORT = 18000;
 const MAX_PORT = 28000;
 const MAX_ATTEMPTS = 18;
 
-export async function reserveBaseUrl() {
+export async function reserveBaseUrl(): Promise<string> {
 	const startPort = randomPort();
 
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
@@ -19,12 +19,12 @@ export async function reserveBaseUrl() {
 	throw new Error('Failed to allocate base_url');
 }
 
-function randomPort() {
+function randomPort(): number {
 	const range = MAX_PORT - MIN_PORT + 1;
 	return MIN_PORT + Math.floor(Math.random() * range);
 }
 
-function wrapPort(port: number) {
+function wrapPort(port: number): number {
 	if (port <= MAX_PORT) {
 		return port;
 	}
@@ -33,7 +33,7 @@ function wrapPort(port: number) {
 	return MIN_PORT + offset;
 }
 
-async function isPortAvailable(port: number) {
+async function isPortAvailable(port: number): Promise<boolean> {
 	return await new Promise<boolean>((resolve) => {
 		const server = createServer();
 

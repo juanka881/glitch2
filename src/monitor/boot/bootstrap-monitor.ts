@@ -2,26 +2,41 @@ import path from 'node:path';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
 import { migrations as registryMigrations } from '#src/db/registry/migrations';
+import {
+	NodeMonitorProcessManager,
+	type MonitorProcessManager,
+} from '#src/monitor/app/monitor/monitor-process-manager';
 import { MonitorRepo } from '#src/monitor/app/monitor/monitor-repo';
 import { MonitorService } from '#src/monitor/app/monitor/monitor-service';
 import { RegistryRepo } from '#src/shared/registry/registry-repo';
 import { RegistryService } from '#src/shared/registry/registry-service';
 import { ensureGlitchHome } from '#src/shared/utils/glitch-home';
 
-export async function bootstrapMonitor(glitchHome?: string) {
+export interface BootstrapMonitorRuntime {
+	glitchHome: string;
+	processManager: MonitorProcessManager;
+	registry: RegistryService;
+	registryDb: DbClient;
+	monitor: MonitorService;
+}
+
+export async function bootstrapMonitor(glitchHome?: string): Promise<BootstrapMonitorRuntime> {
 	const resolvedGlitchHome = await ensureGlitchHome(glitchHome);
 	const registryPath = path.resolve(resolvedGlitchHome, 'registry.glitch');
+	const lockPath = path.resolve(resolvedGlitchHome, 'monitor.lock.json');
 	const registryDb = DbClient.open(registryPath);
 	const registryMigrator = new Migrator(registryDb);
 	registryMigrator.apply(registryMigrations);
 
 	const registryRepo = new RegistryRepo(registryDb);
 	const registry = new RegistryService(registryRepo);
-	const repo = new MonitorRepo(resolvedGlitchHome);
-	const monitor = new MonitorService(repo, registry);
+	const monitorRepo = new MonitorRepo(lockPath);
+	const processManager = new NodeMonitorProcessManager();
+	const monitor = new MonitorService(monitorRepo, registry, processManager);
 
 	return {
 		glitchHome: resolvedGlitchHome,
+		processManager,
 		registry,
 		registryDb,
 		monitor,

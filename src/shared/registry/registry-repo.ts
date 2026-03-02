@@ -72,7 +72,7 @@ export class RegistryRepo {
 		this.db = db;
 	}
 
-	upsertProject(input: UpsertProjectInput) {
+	upsertProject(input: UpsertProjectInput): ProjectModel {
 		this.db.run(
 			`
 				INSERT INTO projects (
@@ -95,19 +95,19 @@ export class RegistryRepo {
 		return project;
 	}
 
-	updateProjectPing(input: UpdateProjectPingInput) {
+	updateProjectPing(input: UpdateProjectPingInput): ProjectModel | null {
 		this.db.run('UPDATE projects SET last_ping_date = ? WHERE id = ?', [input.lastPingDate, input.id]);
 
 		return this.getProjectById(input.id);
 	}
 
-	updateProjectLatestAgent(input: UpdateProjectLatestAgentInput) {
+	updateProjectLatestAgent(input: UpdateProjectLatestAgentInput): ProjectModel | null {
 		this.db.run('UPDATE projects SET latest_agent_id = ? WHERE id = ?', [input.latestAgentId, input.id]);
 
 		return this.getProjectById(input.id);
 	}
 
-	getProjectById(id: string) {
+	getProjectById(id: string): ProjectModel | null {
 		const row = this.db.get<ProjectRow>('SELECT * FROM projects WHERE id = ?', [id]);
 		if (!row) {
 			return null;
@@ -116,7 +116,7 @@ export class RegistryRepo {
 		return new ProjectModel(row);
 	}
 
-	getProjectByCwdHash(cwdHash: string) {
+	getProjectByCwdHash(cwdHash: string): ProjectModel | null {
 		const row = this.db.get<ProjectRow>('SELECT * FROM projects WHERE cwd_hash = ?', [cwdHash]);
 		if (!row) {
 			return null;
@@ -125,7 +125,7 @@ export class RegistryRepo {
 		return new ProjectModel(row);
 	}
 
-	createAgent(input: CreateRegistryAgentInput) {
+	createAgent(input: CreateRegistryAgentInput): RegistryAgentModel {
 		this.db.run(
 			`
 				INSERT INTO agents (
@@ -148,7 +148,7 @@ export class RegistryRepo {
 		return this.getAgentById(input.id);
 	}
 
-	updateAgent(input: UpdateRegistryAgentInput) {
+	updateAgent(input: UpdateRegistryAgentInput): RegistryAgentModel {
 		const current = this.getAgentById(input.id);
 
 		this.db.run(
@@ -172,7 +172,7 @@ export class RegistryRepo {
 		return this.getAgentById(input.id);
 	}
 
-	markStaleAgentsAsCrash(cutoffDate: string, crashDate: string) {
+	markStaleAgentsAsCrash(cutoffDate: string, crashDate: string): void {
 		this.db.run(
 			`
 				UPDATE agents
@@ -184,7 +184,7 @@ export class RegistryRepo {
 		);
 	}
 
-	getAgentById(id: string) {
+	getAgentById(id: string): RegistryAgentModel {
 		const row = this.db.get<RegistryAgentRow>('SELECT * FROM agents WHERE id = ?', [id]);
 
 		if (!row) {
@@ -197,7 +197,7 @@ export class RegistryRepo {
 		});
 	}
 
-	listAgents() {
+	listAgents(): RegistryAgentModel[] {
 		const rows = this.db.all<RegistryAgentRow>('SELECT * FROM agents ORDER BY start_date ASC');
 
 		return rows.map((row) => {
@@ -208,7 +208,7 @@ export class RegistryRepo {
 		});
 	}
 
-	private serializeJson(value: unknown) {
+	private serializeJson(value: unknown): string | null {
 		if (value === null) {
 			return null;
 		}

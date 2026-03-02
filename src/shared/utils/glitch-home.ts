@@ -1,11 +1,11 @@
-import { mkdir } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { resolve } from 'node:path';
+import fsp from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
-export async function ensureGlitchHome(glitchHome?: string) {
-	const resolvedGlitchHome = glitchHome ?? process.env.GLITCH_HOME ?? resolve(homedir(), '.glitch');
+export async function ensureGlitchHome(glitchHome?: string): Promise<string> {
+	const resolvedGlitchHome = glitchHome ?? process.env.GLITCH_HOME ?? path.resolve(os.homedir(), '.glitch');
 
-	await mkdir(resolvedGlitchHome, { recursive: true });
+	await fsp.mkdir(resolvedGlitchHome, { recursive: true });
 
 	return resolvedGlitchHome;
 }

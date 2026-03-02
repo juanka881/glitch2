@@ -48,6 +48,11 @@ Examples:
 - `src/monitor/app/registry`
 - `src/monitor/app/server`
 
+Rules:
+
+- `main.ts` should stay thin and only dispatch commands or boot the runtime
+- when a runtime supports multiple commands, split the command handlers into separate functions or supporting files instead of stuffing all behavior into `main.ts`
+
 ## Runtime Feature Module Layout
 
 Each feature folder under `src/<runtime>/app/<feature>` should follow the same internal structure.
@@ -116,6 +121,7 @@ Build metadata rules:
 - shared build metadata helpers should live under `src/shared/build.ts`
 - binaries should read version and commit from build-time constants such as `BUILD_VERSION` and `BUILD_COMMIT`
 - runtime code should not read `package.json` directly to determine binary version metadata
+- runtime-specific process helpers should stay in the owning runtime module, not in shared code, unless they are truly generic across runtimes
 
 ## Migration Rules
 
@@ -204,6 +210,7 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - avoid constructor parameter properties such as `constructor(private readonly repo: Repo) {}`
 - avoid inline collection or object initializers for class state; initialize them in the constructor instead
 - if graceful shutdown behavior is reusable, place it under `src/shared/utils` instead of embedding it in a single runtime entrypoint
+- keep platform-specific concerns such as process spawning, browser launch, or PID checks behind interface-backed helpers instead of mixing them directly into orchestration services
 
 ### Repos
 
@@ -223,12 +230,19 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 
 - prefer explicit inputs over defaulting runtime values in the parameter list for boot or environment-dependent functions
 - for example, prefer `bootstrapAgent(cwd: string)` and let the caller pass `process.cwd()`
+- keep boot functions focused on constructing runtime dependencies; avoid hidden domain-side side effects such as creating registry rows during bootstrap
+- exported functions and public methods should declare explicit return types instead of relying on inference
+- prefer built-in platform types directly when they already exist; do not reach for `ReturnType<...>` when the runtime or standard library already provides a clearer type
 - avoid dense inline transformations that are hard to scan
 - when a mapping or conversion has real logic, assign it to a local variable before returning
 - avoid reconstructing the same object shape just to pass it into a constructor again
 - when a callsite becomes hard to scan, break it into intermediate variables instead of nesting transformations inline
 - prefer extracting non-trivial event payloads into named variables before passing them into `emit(...)`
+- do not introduce artificial forever-waits such as unresolved promises just to keep a runtime alive; if the server or timer keeps the process alive naturally, return after setup
+- avoid unconditional endless loops when a real runtime condition already exists; prefer loops such as `while (isAlive)` and keep timeout checks inside the loop body
+- if runtime structure or lifecycle behavior is unclear, stop and ask instead of inventing control-flow on a hunch
 - use `Promise.allSettled(...)` by default when coordinating multiple async operations that should all be awaited; use `Promise.all(...)` only for special cases
+- keep cleanup orchestration separate from state transitions; reusable shutdown helpers should manage cleanup steps, while runtime entrypoints should decide whether the final persisted state is `exit`, `fail`, or another terminal state
 
 ## Testing Conventions
 
@@ -306,6 +320,7 @@ Keep this structure visually obvious in the test body so tests stay easy to scan
 - Project telemetry data lives in `<project_root>/.glitch/agent.glitch`
 - Global discovery data and shared settings live in `<home>/.glitch/`
 - The registry database lives at `<home>/.glitch/registry.glitch`
+- Monitor lock state lives at `<home>/.glitch/monitor.lock.json`
 - The home directory stores discovery state and monitor metadata, not the primary project telemetry dataset
 
 Current project id rule:

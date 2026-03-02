@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { test } from 'bun:test';
-import type { ManagedChildProcess, ProcessManager } from '#src/agent/app/supervisor/process-manager';
 import { AgentRunStatus, ProcessDefinition, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
 import { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
 import { SupervisorService } from '#src/agent/app/supervisor/supervisor-service';
 import { migrations } from '#src/db/agent/migrations';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
+import type { ManagedChildProcess, ProcessManager } from '#src/shared/utils/process-manager';
 
 class FakeChildProcess extends EventEmitter implements ManagedChildProcess {
 	pid?: number;
@@ -197,7 +197,7 @@ test('SupervisorService stops a process and records stop status', async () => {
 	}
 });
 
-test('SupervisorService records agent failure details', async () => {
+test('SupervisorService shutdown records agent exit status', async () => {
 	const { db, service } = createService();
 
 	try {
@@ -210,16 +210,10 @@ test('SupervisorService records agent failure details', async () => {
 			processes: [],
 		});
 
-		const failedRun = await service.fail(new Error('boom'));
-		const errorPayload = failedRun.error as {
-			message: string;
-			name: string;
-			stack: string | null;
-		};
+		const exitedRun = await service.shutdown();
 
-		assert(failedRun.status === AgentRunStatus.Fail, 'agent run status must become fail');
-		assert(errorPayload.name === 'Error', 'error name must be captured');
-		assert(errorPayload.message === 'boom', 'error message must be captured');
+		assert(exitedRun?.status === AgentRunStatus.Exit, 'agent run status must become exit');
+		assert(exitedRun?.end_date !== null, 'agent run end_date must be set on shutdown');
 	} finally {
 		db.close();
 	}

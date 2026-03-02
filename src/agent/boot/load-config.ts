@@ -16,7 +16,13 @@ const glitchConfigSchema = z.object({
 	modules: z.record(z.string(), z.unknown()).default({}),
 });
 
-export async function loadConfig(cwd: string) {
+export interface GlitchConfig {
+	name: string;
+	modules: Record<string, unknown>;
+	processes: ProcessDefinition[];
+}
+
+export async function loadConfig(cwd: string): Promise<GlitchConfig> {
 	const filePath = path.resolve(cwd, 'glitch.config.json');
 	const content = await fsp.readFile(filePath, 'utf8');
 	const parsed = glitchConfigSchema.parse(JSON.parse(content));

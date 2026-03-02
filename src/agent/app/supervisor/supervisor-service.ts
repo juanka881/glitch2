@@ -11,11 +11,10 @@ import {
 	type ProcessStartEvent,
 	type SupervisorEvent,
 } from '#src/agent/app/supervisor/supervisor-shapes';
-import type { ManagedChildProcess, ProcessManager } from '#src/agent/app/supervisor/process-manager';
-import { NodeProcessManager } from '#src/agent/app/supervisor/process-manager';
 import type { AgentRunModel } from '#src/db/agent/models/agent-run-model';
 import type { ProcessRunModel } from '#src/db/agent/models/process-run-model';
 import type { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
+import { NodeProcessManager, type ManagedChildProcess, type ProcessManager } from '#src/shared/utils/process-manager';
 
 interface WritableLike {
 	write(chunk: string): unknown;
@@ -65,7 +64,7 @@ export class SupervisorService {
 		this.isStopping = false;
 	}
 
-	subscribe(listener: EventListener) {
+	subscribe(listener: EventListener): () => void {
 		this.listeners.add(listener);
 
 		return () => {
@@ -73,7 +72,7 @@ export class SupervisorService {
 		};
 	}
 
-	async start(input: StartSupervisorInput) {
+	async start(input: StartSupervisorInput): Promise<AgentRunModel> {
 		const startDate = new Date().toISOString();
 
 		this.agentRun = this.repo.createAgentRun({
@@ -98,7 +97,7 @@ export class SupervisorService {
 		return this.agentRun;
 	}
 
-	startProcess(processDefinition: ProcessDefinition) {
+	startProcess(processDefinition: ProcessDefinition): ProcessRunModel {
 		const agentRun = this.requireAgentRun();
 		const processRun = this.repo.createProcessRun({
 			id: uuidv7(),
@@ -229,7 +228,7 @@ export class SupervisorService {
 		return runningProcessRun;
 	}
 
-	async stopProcess(processId: string) {
+	async stopProcess(processId: string): Promise<ProcessRunModel | null> {
 		const managedProcess = this.managedProcesses.get(processId);
 
 		if (!managedProcess) {
@@ -242,7 +241,7 @@ export class SupervisorService {
 		return managedProcess.exitPromise;
 	}
 
-	async shutdown() {
+	async shutdown(): Promise<AgentRunModel | null> {
 		if (this.isStopping) {
 			return this.agentRun;
 		}
@@ -264,34 +263,16 @@ export class SupervisorService {
 		return this.agentRun;
 	}
 
-	async fail(error: unknown) {
-		const agentRun = this.requireAgentRun();
-
-		this.agentRun = this.repo.updateAgentRun({
-			id: agentRun.id,
-			status: AgentRunStatus.Fail,
-			end_date: new Date().toISOString(),
-			error: toErrorPayload(error),
-		});
-
-		const processIds = [...this.managedProcesses.keys()];
-		const stopPromises = processIds.map((processId) => this.stopProcess(processId));
-
-		await Promise.allSettled(stopPromises);
-
+	getAgentRun(): AgentRunModel | null {
 		return this.agentRun;
 	}
 
-	getAgentRun() {
-		return this.agentRun;
-	}
-
-	waitForProcessExit(processId: string) {
+	waitForProcessExit(processId: string): Promise<ProcessRunModel> | null {
 		const managedProcess = this.managedProcesses.get(processId);
 		return managedProcess?.exitPromise ?? null;
 	}
 
-	private requireAgentRun() {
+	private requireAgentRun(): AgentRunModel {
 		if (!this.agentRun) {
 			throw new Error('Supervisor has not started');
 		}
@@ -299,7 +280,7 @@ export class SupervisorService {
 		return this.agentRun;
 	}
 
-	private handleStreamData(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', chunk: string) {
+	private handleStreamData(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', chunk: string): void {
 		managedProcess.buffers[stream] += chunk;
 		const lines = managedProcess.buffers[stream].split(/\r?\n/);
 		managedProcess.buffers[stream] = lines.pop() ?? '';
@@ -309,7 +290,7 @@ export class SupervisorService {
 		}
 	}
 
-	private flushBufferedLines(managedProcess: ManagedProcess) {
+	private flushBufferedLines(managedProcess: ManagedProcess): void {
 		for (const stream of ['stdout', 'stderr'] as const) {
 			const line = managedProcess.buffers[stream];
 			if (!line) {
@@ -321,7 +302,7 @@ export class SupervisorService {
 		}
 	}
 
-	private emitProcessLine(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', line: string) {
+	private emitProcessLine(managedProcess: ManagedProcess, stream: 'stdout' | 'stderr', line: string): void {
 		const captureDate = new Date().toISOString();
 		const processStream = stream === 'stdout' ? ProcessStream.Stdout : ProcessStream.Stderr;
 		const processName = util.styleText('blue', managedProcess.processId);
@@ -347,23 +328,9 @@ export class SupervisorService {
 		this.emit(outputEvent);
 	}
 
-	private emit(event: SupervisorEvent) {
+	private emit(event: SupervisorEvent): void {
 		for (const listener of this.listeners) {
 			listener(event);
 		}
 	}
-}
-
-function toErrorPayload(error: unknown) {
-	if (error instanceof Error) {
-		return {
-			name: error.name,
-			message: error.message,
-			stack: error.stack ?? null,
-		};
-	}
-
-	return {
-		message: String(error),
-	};
 }

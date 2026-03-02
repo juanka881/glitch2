@@ -19,7 +19,7 @@ export interface ProcessManager {
 }
 
 export class NodeProcessManager implements ProcessManager {
-	spawn(processDefinition: ProcessDefinition) {
+	spawn(processDefinition: ProcessDefinition): ManagedChildProcess {
 		const { file, args } = createShellLaunch(processDefinition.command);
 
 		return childProcess.spawn(file, args, {
@@ -33,7 +33,7 @@ export class NodeProcessManager implements ProcessManager {
 		}) as unknown as ChildProcessWithoutNullStreams;
 	}
 
-	stop(pid: number) {
+	stop(pid: number): void {
 		try {
 			if (process.platform === 'win32') {
 				childProcess.spawnSync('taskkill', ['/pid', String(pid), '/t', '/f'], {
@@ -56,7 +56,7 @@ export class NodeProcessManager implements ProcessManager {
 	}
 }
 
-function createShellLaunch(command: string) {
+function createShellLaunch(command: string): { file: string; args: string[] } {
 	if (process.platform === 'win32') {
 		return {
 			file: process.env.ComSpec ?? 'cmd.exe',

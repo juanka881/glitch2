@@ -1,35 +1,99 @@
 import fsp from 'node:fs/promises';
-import path from 'node:path';
-import { MonitorProcess } from '#src/monitor/app/monitor/monitor-shapes';
+import { MonitorLock } from '#src/monitor/app/monitor/monitor-shapes';
+
+export type MonitorLockWriter = (monitorLock: MonitorLock) => Promise<void>;
 
 export class MonitorRepo {
-	private readonly glitchHome: string;
+	private readonly lockPath: string;
+	private readonly tempLockPath: string;
 
-	constructor(glitchHome: string) {
-		this.glitchHome = glitchHome;
+	constructor(lockPath: string) {
+		this.lockPath = lockPath;
+		this.tempLockPath = `${lockPath}.tmp`;
 	}
 
-	async readProcess() {
+	async readLock(): Promise<MonitorLock | undefined> {
 		try {
-			const filePath = this.getMetadataPath();
-			const raw = await fsp.readFile(filePath, 'utf8');
-			return new MonitorProcess(JSON.parse(raw));
-		} catch {
-			return null;
+			const data = await fsp.readFile(this.lockPath, 'utf-8');
+			const fields = JSON.parse(data) as unknown;
+
+			return new MonitorLock(fields);
+		} catch (error) {
+			if (isMissing(error)) {
+				return undefined;
+			}
+
+			if (isIncompleteJson(error)) {
+				return undefined;
+			}
+
+			throw error;
 		}
 	}
 
-	async writeProcess(monitorProcess: MonitorProcess) {
-		const filePath = this.getMetadataPath();
-		await fsp.writeFile(filePath, `${JSON.stringify(monitorProcess, null, 2)}\n`, 'utf8');
+	async acquireLock(): Promise<MonitorLockWriter | undefined> {
+		try {
+			const handle = await fsp.open(this.lockPath, 'wx');
+
+			const writeLock: MonitorLockWriter = async (monitorLock) => {
+				const data = JSON.stringify(monitorLock, null, 2);
+
+				try {
+					await fsp.writeFile(this.tempLockPath, data, 'utf-8');
+				} finally {
+					await handle.close();
+				}
+
+				await fsp.unlink(this.lockPath);
+				await fsp.rename(this.tempLockPath, this.lockPath);
+			};
+
+			return writeLock;
+		} catch (error) {
+			if (isAlreadyExists(error)) {
+				return undefined;
+			}
+
+			throw error;
+		}
 	}
 
-	async clearProcess() {
-		const filePath = this.getMetadataPath();
-		await fsp.rm(filePath, { force: true });
-	}
+	async removeLock(): Promise<void> {
+		try {
+			await fsp.unlink(this.lockPath);
+		} catch (error) {
+			if (isMissing(error)) {
+				await removeIfPresent(this.tempLockPath);
+				return;
+			}
 
-	getMetadataPath() {
-		return path.resolve(this.glitchHome, 'monitor.json');
+			throw error;
+		}
+
+		await removeIfPresent(this.tempLockPath);
+	}
+}
+
+function isMissing(error: unknown): boolean {
+	return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+function isAlreadyExists(error: unknown): boolean {
+	return typeof error === 'object' && error !== null && 'code' in error && error.code === 'EEXIST';
+}
+
+function isIncompleteJson(error: unknown): boolean {
+	return error instanceof SyntaxError;
+}
+
+async function removeIfPresent(path: string): Promise<void> {
+	try {
+		await fsp.unlink(path);
+	} catch (error) {
+		if (isMissing(error)) {
+			return;
+		}
+
+		throw error;
 	}
 }

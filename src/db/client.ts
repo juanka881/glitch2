@@ -9,15 +9,15 @@ export class DbClient {
 		this.sqlite = sqlite;
 	}
 
-	static open(path: string) {
+	static open(path: string): DbClient {
 		return new DbClient(new Database(path, { create: true, strict: true }));
 	}
 
-	static memory() {
+	static memory(): DbClient {
 		return new DbClient(new Database(':memory:', { create: true, strict: true }));
 	}
 
-	run(sql: string, params?: SqlParams) {
+	run(sql: string, params?: SqlParams): unknown {
 		const statement = this.sqlite.query(sql);
 
 		if (params === undefined) {
@@ -31,7 +31,7 @@ export class DbClient {
 		return statement.run(params as never);
 	}
 
-	get<T>(sql: string, params?: SqlParams) {
+	get<T>(sql: string, params?: SqlParams): T | null {
 		const statement = this.sqlite.query(sql);
 
 		if (params === undefined) {
@@ -45,7 +45,7 @@ export class DbClient {
 		return (statement.get(params as never) as T | null) ?? null;
 	}
 
-	all<T>(sql: string, params?: SqlParams) {
+	all<T>(sql: string, params?: SqlParams): T[] {
 		const statement = this.sqlite.query(sql);
 
 		if (params === undefined) {
@@ -59,11 +59,11 @@ export class DbClient {
 		return (statement.all(params as never) as T[]) ?? [];
 	}
 
-	transaction<T>(callback: () => T) {
+	transaction<T>(callback: () => T): T {
 		return this.sqlite.transaction(callback)();
 	}
 
-	close() {
+	close(): void {
 		this.sqlite.close(false);
 	}
 }
