@@ -38,6 +38,7 @@ Current design documents:
 - [`features/20260228-supervision.md`](./features/20260228-supervision.md)
 - [`features/20260228-logger.md`](./features/20260228-logger.md)
 - [`features/20260228-discovery.md`](./features/20260228-discovery.md)
+- [`features/20260302-web-ui.md`](./features/20260302-web-ui.md)
 
 Use these when working on a specific feature or when a prompt references a module by name.
 

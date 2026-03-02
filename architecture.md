@@ -52,6 +52,28 @@ Rules:
 - `main.ts` should stay thin and only dispatch commands or boot the runtime
 - when a runtime supports multiple commands, split the command handlers into separate functions or supporting files instead of stuffing all behavior into `main.ts`
 
+## Web Code Layout
+
+Web code should live under `src/web`.
+
+Expected structure:
+
+- `src/web/index.html`
+- `src/web/main.ts`
+- `src/web/app/*`
+- `src/web/routes/*`
+- `src/web/components/*`
+- `src/web/lib/*`
+- `src/web/styles/*`
+
+Rules:
+
+- the web app should use SolidJS and `@solidjs/router`
+- route files should be organized to mirror URL structure so it is obvious which file maps to which route
+- shared components should live under `src/web/components/<component>/*`
+- component-local CSS should be colocated with the component or route it styles
+- `src/web/styles/*` should be reserved for truly global web styles such as tokens, resets, and app-wide base rules
+
 ## Runtime Feature Module Layout
 
 Each feature folder under `src/<runtime>/app/<feature>` should follow the same internal structure.
@@ -84,6 +106,70 @@ Rules:
 - internal feature shapes must not be reused as public API transport shapes
 - API `<feature>-http-shapes.ts` is only for request and response contracts
 - this applies to both `src/agent/*` and `src/monitor/*`
+
+## API Layout
+
+When a runtime feature exposes API routes, keep the API code inside that feature folder.
+
+Expected structure:
+
+- `src/<runtime>/app/<feature>/api/router.ts`
+- `src/<runtime>/app/<feature>/api/api-shapes.ts`
+- `src/<runtime>/app/<feature>/api/event-shapes.ts`
+- `src/<runtime>/app/<feature>/api/handlers/*`
+
+Rules:
+
+- `router.ts` should export a `create<Feature>Router(...)` function such as `createMonitorRouter(...)`
+- pass required dependencies into the router factory explicitly
+- use one handler file per endpoint action
+- do not group multiple endpoint actions into a single handler file
+- each handler should treat HTTP as a transport only:
+  - create input from params and query
+  - validate input through a data class or schema
+  - run action logic
+  - create output object
+  - write output to the response
+- route handlers should not perform business logic directly when a feature service already owns that behavior
+- shared HTTP response helpers such as JSON success and error writers should live under shared utilities instead of being duplicated
+
+Naming rules:
+
+- map read operations to `GET`
+- prefer singular action names to avoid plurality drift
+- examples:
+  - `GET /agents/:agent_id` -> `getAgent`
+  - `GET /agents?status=running` -> `getAgentList`
+
+Transport shape rules:
+
+- use input and output record classes for endpoint contracts
+- validate API contracts with Zod and data classes before the handler uses them
+- keep API DTOs separate from internal feature shapes when the transport contract differs
+
+## Socket Layout
+
+Socket transport should follow the same feature-local organization.
+
+Rules:
+
+- use a shared app-level event endpoint such as `/api/event`
+- use Socket.IO as the high-level transport layer
+- keep Socket.IO integration behind a shared `EventBus` abstraction instead of coupling features directly to `io`
+- `event-shapes.ts` should define the emitted transport event contracts for that feature
+- the UI should talk only to monitor-hosted sockets; the monitor may internally subscribe to agent events and forward them transparently
+
+Room naming rules:
+
+- use topic-style room names
+- provide helper functions for room generation instead of constructing room names inline
+- example:
+  - `getProcessStreamRoomName(agentId, processId)` -> `agent:<agent_id>:process:<process_id>`
+
+Client wrapper rules:
+
+- browser-side socket consumption should be wrapped in typed event-source classes instead of raw callback wiring
+- browser-side API clients should stay separate from browser-side event sources
 
 ## Database Layout
 
@@ -224,6 +310,7 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - keep transport-specific API shapes separate from internal shapes
 - when a concept exists both in persistence and in transport, define separate classes or schemas for each layer
 - use TypeScript `enum` for closed enum sets and pass the enum into `z.enum(...)` when defining schemas
+- web-facing data contracts should follow the same pattern: use data classes plus Zod schemas so UI code consumes validated objects instead of loose JSON
 
 ### Function Style
 
