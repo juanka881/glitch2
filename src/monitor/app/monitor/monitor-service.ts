@@ -10,10 +10,10 @@ import { MonitorLock, MonitorStatus } from '#src/monitor/app/monitor/monitor-sha
 import { MonitorStreamService } from '#src/monitor/app/monitor/monitor-stream-service';
 import { EventBus } from '#src/shared/events/event-bus';
 import type { RegistryService } from '#src/shared/registry/registry-service';
-import { createApiApp } from '#src/shared/utils/http';
+import { reserveBaseUrl, DEV_MONITOR_BASE_URL } from '#src/shared/utils/base-url';
 import { isAbortError } from '#src/shared/utils/error';
+import { createApiApp } from '#src/shared/utils/http';
 import { wait } from '#src/shared/utils/promise';
-import { reserveBaseUrl } from '#src/shared/utils/base-url';
 import { ShutdownManager } from '#src/shared/utils/shutdown-manager';
 
 const HEALTH_TIMEOUT_MS = 5_000;
@@ -176,6 +176,56 @@ export class MonitorService {
 			return;
 		}
 
+		await this.serveMonitor(monitorLock, query, true);
+	}
+
+	async serveDev(version: string, query: MonitorQueryService): Promise<void> {
+		const monitorLock = new MonitorLock({
+			pid: process.pid,
+			base_url: DEV_MONITOR_BASE_URL,
+			start_date: new Date().toISOString(),
+			version,
+		});
+
+		await this.serveMonitor(monitorLock, query, false);
+	}
+
+	openBrowser(url: string): void {
+		this.processManager.openBrowser(url);
+	}
+
+	private createApp(query: MonitorQueryService, stream: MonitorStreamService): Hono {
+		const app = createApiApp('glitch-monitor');
+		const monitorRouter = createMonitorRouter({
+			query,
+			stream,
+		});
+
+		app.route('/', monitorRouter);
+		return app;
+	}
+
+	private createServer(monitorUrl: URL, app: Hono, engine: BunEngineServer) {
+		const engineHandler = engine.handler();
+
+		return Bun.serve({
+			hostname: monitorUrl.hostname,
+			port: Number(monitorUrl.port),
+			websocket: engineHandler.websocket,
+			async fetch(request, server) {
+				const requestUrl = new URL(request.url);
+				const requestPath = requestUrl.pathname;
+
+				if (requestPath.startsWith(MONITOR_EVENT_PATH)) {
+					return engine.handleRequest(request, server);
+				}
+
+				return app.fetch(request);
+			},
+		});
+	}
+
+	private async serveMonitor(monitorLock: MonitorLock, query: MonitorQueryService, manageLock: boolean): Promise<void> {
 		const monitorUrl = new URL(monitorLock.base_url);
 		const io = new SocketServer({
 			path: MONITOR_EVENT_PATH,
@@ -218,9 +268,11 @@ export class MonitorService {
 			await io.close();
 		});
 
-		shutdownManager.register('remove monitor lock', async () => {
-			await this.repo.removeLock();
-		});
+		if (manageLock) {
+			shutdownManager.register('remove monitor lock', async () => {
+				await this.repo.removeLock();
+			});
+		}
 
 		process.once('SIGINT', () => shutdownManager.shutdown(130, 'SIGINT'));
 		process.once('SIGTERM', () => shutdownManager.shutdown(143, 'SIGTERM'));
@@ -228,41 +280,6 @@ export class MonitorService {
 		if (process.platform === 'win32') {
 			process.once('SIGBREAK', () => shutdownManager.shutdown(131, 'SIGBREAK'));
 		}
-	}
-
-	openBrowser(url: string): void {
-		this.processManager.openBrowser(url);
-	}
-
-	private createApp(query: MonitorQueryService, stream: MonitorStreamService): Hono {
-		const app = createApiApp('glitch-monitor');
-		const monitorRouter = createMonitorRouter({
-			query,
-			stream,
-		});
-
-		app.route('/', monitorRouter);
-		return app;
-	}
-
-	private createServer(monitorUrl: URL, app: Hono, engine: BunEngineServer) {
-		const engineHandler = engine.handler();
-
-		return Bun.serve({
-			hostname: monitorUrl.hostname,
-			port: Number(monitorUrl.port),
-			websocket: engineHandler.websocket,
-			async fetch(request, server) {
-				const requestUrl = new URL(request.url);
-				const requestPath = requestUrl.pathname;
-
-				if (requestPath.startsWith(MONITOR_EVENT_PATH)) {
-					return engine.handleRequest(request, server);
-				}
-
-				return app.fetch(request);
-			},
-		});
 	}
 
 	private async waitForLock(): Promise<MonitorLock | undefined> {

@@ -21,9 +21,9 @@ export default defineConfig({
             },
             {
                 extends: true,
-                plugins: [solid()],
+                plugins: [solid() as any],
                 resolve: {
-                    conditions: ['developement', 'browser'],
+                    conditions: ['development', 'browser'],
                 },
                 test: {
                     name: 'web',
@@ -41,3 +41,4 @@ export default defineConfig({
         ]
     }
 });
+

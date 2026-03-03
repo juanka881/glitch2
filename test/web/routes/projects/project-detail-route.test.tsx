@@ -26,12 +26,9 @@ test('ProjectDetailRoute renders', async () => {
 	render(() => (
 		<MemoryRouter>
 			<Route
-				path='/'
+				path="/"
 				component={() => (
-					<ProjectDetailRoute
-						monitorApiClient={monitorApiClient}
-						projectId='018f433e-e4f9-7e6e-a87f-0f5cfe8f0f61'
-					/>
+					<ProjectDetailRoute monitorApiClient={monitorApiClient} projectId="018f433e-e4f9-7e6e-a87f-0f5cfe8f0f61" />
 				)}
 			/>
 		</MemoryRouter>

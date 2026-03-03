@@ -30,7 +30,7 @@ test('AgentsRoute renders', async () => {
 
 	render(() => (
 		<MemoryRouter>
-			<Route path='/' component={() => <AgentsRoute monitorApiClient={monitorApiClient} />} />
+			<Route path="/" component={() => <AgentsRoute monitorApiClient={monitorApiClient} />} />
 		</MemoryRouter>
 	));
 

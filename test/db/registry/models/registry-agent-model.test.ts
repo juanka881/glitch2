@@ -37,4 +37,3 @@ test('RegistryAgentModel rejects invalid fields', () => {
 		'RegistryAgentModel must reject invalid data',
 	);
 });
-

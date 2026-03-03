@@ -1,7 +1,19 @@
 import util from 'node:util';
 import type { BootstrapMonitorRuntime } from '#src/monitor/boot/bootstrap-monitor';
+import { DEV_MONITOR_BASE_URL } from '#src/shared/utils/base-url';
 
-export async function handleMonitorStart(runtime: BootstrapMonitorRuntime): Promise<void> {
+export async function handleMonitorStart(
+	runtime: BootstrapMonitorRuntime,
+	version: string,
+	devMode: boolean,
+): Promise<void> {
+	if (devMode) {
+		console.log(`glitch monitor ${util.styleText('green', 'dev')}`);
+		console.log(`  url ${DEV_MONITOR_BASE_URL}`);
+		await runtime.monitor.serveDev(version, runtime.query);
+		return;
+	}
+
 	const status = await runtime.monitor.getStatus();
 
 	if (status) {

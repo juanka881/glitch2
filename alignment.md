@@ -728,7 +728,7 @@ onSnapshot(callback: SnapshotCallback): () => void {
 
 I kept the test suite on Bun's runner even after the frontend tests started to need Solid-specific transformation and browser-style testing behavior. You corrected this and moved the repo to Vitest so app and web tests can be configured independently.
 
-Resolved by switching test imports and mocks over to Vitest, updating repo guidance to use `bun run test`, `bun run test:app`, and `bun run test:web`, and moving web component and route tests toward `@solidjs/testing-library` with `render` and `screen`.
+Resolved by switching test imports and mocks over to Vitest, updating repo guidance to use `bun run test:all`, `bun run test:app`, and `bun run test:web`, and moving web component and route tests toward `@solidjs/testing-library` with `render` and `screen`.
 
 ```ts
 // before
@@ -772,3 +772,27 @@ render(() => (
   </MemoryRouter>
 ));
 ```
+# Alignment (2026-03-02 22:41): Add A Foreground Monitor Dev Mode
+
+I initially kept thinking about frontend development as if it had to go through the normal lock-backed, daemonized `glw start` flow. You corrected this and clarified that UI iteration needs a simpler path.
+
+Resolved by adding `glw start --dev`, which runs the monitor in the foreground on the fixed dev URL `http://127.0.0.1:18000` and skips lock acquisition, daemonization, and monitor state-file writes.
+
+# Alignment (2026-03-02 22:41): Use One Wrapper Script For Frontend Development
+
+I was leaning toward separate commands for the monitor and Vite. You corrected this and pushed the workflow toward one explicit development entrypoint.
+
+Resolved by introducing `bun run dev:web`, which starts the monitor entrypoint in dev mode, sets `GLITCH_MONITOR_BASE_URL`, launches the Vite dev server, and shuts both processes down together.
+
+# Alignment (2026-03-02 22:52): Start Vite Through Its Programmatic API In The Dev Wrapper
+
+I initially responded to the Vite proxy crash by moving Vite into a separate Node process. You corrected that because the wrapper should keep tighter control of the dev server instead of shelling it out when Vite already exposes a clean API for this.
+
+Resolved by keeping the monitor as the only external child process and starting the Vite dev server through `vite.createServer(...)` inside `scripts/dev-web.ts`, while still setting `GLITCH_MONITOR_BASE_URL` before the server boots.
+
+# Alignment (2026-03-02 23:02): Force WebSocket Transport For The Dev Socket Client
+
+I initially treated the Vite proxy crash like a generic monitor-side WebSocket failure. After reviewing the Socket.IO and Bun engine docs, the issue is clearer: Engine.IO starts with HTTP long-polling before upgrading to WebSocket, which drives requests through Vite's HTTP proxy path. That is the codepath that blows up under Bun with `socket.destroySoon()`.
+
+Resolved by forcing the monitor event client to use `transports: ['websocket']` in dev mode so the connection skips polling and goes straight to the WebSocket path.
+

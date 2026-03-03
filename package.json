@@ -6,18 +6,18 @@
   "type": "module",
   "scripts": {
     "check": "tsgo",
-    "test": "bun --bun vitest",
+    "test:all": "bun --bun vitest run",
     "test:app": "bun --bun vitest run --project app",
     "test:web": "bun --bun vitest run --project web",
     "fmt": "biome format --write",
     "lint": "biome lint --write",
-    "web:dev": "vite",
+    "dev:web": "bun run ./scripts/dev-web.ts",
     "web:build": "vite",
     "web:preview": "vite preview",
     "make:agent": "bun run ./scripts/make.ts ./src/agent/main.ts ./dist/glx",
     "make:monitor": "bun run ./scripts/make.ts ./src/monitor/main.ts ./dist/glw",
-    "premake": "bun fmt && bun lint && bun check && bun run test",
-    "make": "bun make:agent && bun make:monitor"
+    "premake": "bun fmt && bun lint && bun check && bun run test:all",
+    "make": "bun make:agent && bun make:monitor"    
   },
   "dependencies": {
     "@logtape/logtape": "^2.0.4",
@@ -40,7 +40,7 @@
     "@types/bun": "^1.3.10",
     "@typescript/native-preview": "^7.0.0-dev.20260228.1",
     "jsdom": "^28.1.0",
-    "vite": "^7.3.1",
+    "vite": "^6.0.0",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.18"
   }

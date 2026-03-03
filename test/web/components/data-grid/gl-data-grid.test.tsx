@@ -18,6 +18,6 @@ test('GlDataGrid renders', async () => {
 			rows={[{ id: '1', name: 'alpha' }]}
 		/>
 	));
-	
+
 	expect(screen.getByText('alpha')).toBeDefined();
 });

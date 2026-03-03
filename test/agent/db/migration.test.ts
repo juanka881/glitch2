@@ -39,4 +39,3 @@ test('applyMigrations is idempotent', () => {
 		db.close();
 	}
 });
-

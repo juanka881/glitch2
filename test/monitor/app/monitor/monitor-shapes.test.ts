@@ -51,4 +51,3 @@ test('MonitorStatus rejects invalid fields', () => {
 		'MonitorStatus must reject invalid data',
 	);
 });
-

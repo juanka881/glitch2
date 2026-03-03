@@ -34,7 +34,7 @@ test('OverviewRoute renders', async () => {
 
 	render(() => (
 		<MemoryRouter>
-			<Route path='/' component={() => <OverviewRoute monitorApiClient={monitorApiClient} />} />
+			<Route path="/" component={() => <OverviewRoute monitorApiClient={monitorApiClient} />} />
 		</MemoryRouter>
 	));
 

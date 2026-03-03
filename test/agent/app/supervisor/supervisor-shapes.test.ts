@@ -27,4 +27,3 @@ test('ProcessDefinition rejects invalid fields', () => {
 		'ProcessDefinition must reject invalid data',
 	);
 });
-

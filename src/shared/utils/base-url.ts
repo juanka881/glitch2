@@ -4,6 +4,8 @@ const MIN_PORT = 18000;
 const MAX_PORT = 28000;
 const MAX_ATTEMPTS = 18;
 
+export const DEV_MONITOR_BASE_URL = `http://127.0.0.1:${MIN_PORT}`;
+
 export async function reserveBaseUrl(): Promise<string> {
 	const startPort = randomPort();
 

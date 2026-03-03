@@ -35,4 +35,3 @@ test('AgentRunModel rejects invalid fields', () => {
 		'AgentRunModel must reject invalid data',
 	);
 });
-

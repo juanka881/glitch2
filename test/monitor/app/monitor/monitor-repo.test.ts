@@ -98,4 +98,3 @@ test('MonitorRepo returns undefined for an incomplete lock file', async () => {
 		await fsp.rm(tempDir, { recursive: true, force: true });
 	}
 });
-

@@ -92,10 +92,10 @@ test('AgentDetailRoute renders', async () => {
 	render(() => (
 		<MemoryRouter>
 			<Route
-				path='/'
+				path="/"
 				component={() => (
 					<AgentDetailRoute
-						agentId='018f433e-e4f9-7e6e-a87f-0f5cfe8f0f80'
+						agentId="018f433e-e4f9-7e6e-a87f-0f5cfe8f0f80"
 						monitorEventSource={monitorEventSource}
 						monitorApiClient={monitorApiClient}
 					/>

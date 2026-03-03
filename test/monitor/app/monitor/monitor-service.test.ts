@@ -151,4 +151,3 @@ test('MonitorService stop removes the lock for a live monitor', async () => {
 		await fsp.rm(tempDir, { recursive: true, force: true });
 	}
 });
-

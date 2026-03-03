@@ -9,6 +9,6 @@ test('GlSplitLayout renders', async () => {
 			<GlSplitLayoutPane type="secondary">right</GlSplitLayoutPane>
 		</GlSplitLayout>
 	));
-	
+
 	expect(screen.getByText('left')).toBeDefined();
 });

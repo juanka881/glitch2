@@ -38,4 +38,3 @@ test('registry migrations are idempotent', () => {
 		db.close();
 	}
 });
-

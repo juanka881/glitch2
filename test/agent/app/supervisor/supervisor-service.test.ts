@@ -218,4 +218,3 @@ test('SupervisorService shutdown records agent exit status', async () => {
 		db.close();
 	}
 });
-

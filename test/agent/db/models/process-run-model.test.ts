@@ -39,4 +39,3 @@ test('ProcessRunModel rejects invalid fields', () => {
 		'ProcessRunModel must reject invalid data',
 	);
 });
-

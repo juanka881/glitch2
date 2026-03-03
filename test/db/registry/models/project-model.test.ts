@@ -31,4 +31,3 @@ test('ProjectModel rejects invalid fields', () => {
 		'ProjectModel must reject invalid data',
 	);
 });
-

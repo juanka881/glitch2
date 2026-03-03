@@ -51,6 +51,7 @@ Rules:
 
 - `main.ts` should stay thin and only dispatch commands or boot the runtime
 - when a runtime supports multiple commands, split the command handlers into separate functions or supporting files instead of stuffing all behavior into `main.ts`
+- `glw start --dev` should run the monitor in the foreground on the fixed dev URL `http://127.0.0.1:18000` without acquiring `monitor.lock` or writing `monitor.state.json`
 
 ## Web Code Layout
 
@@ -71,6 +72,9 @@ Rules:
 - the web app should use SolidJS and `@solidjs/router`
 - Vitest web-project config should enable `test.server.deps.inline = true` so SolidJS-related modules are transformed correctly by the Vite/Solid pipeline during tests
 - route files should be organized to mirror URL structure so it is obvious which file maps to which route
+- local frontend development should run through `bun run dev:web`, which starts the monitor entrypoint in dev mode and the Vite dev server together
+- the dev wrapper should launch the monitor as a child process and start the Vite dev server through Vite's programmatic API so the workflow stays in one process and the script has direct control over shutdown
+- the web client should force Socket.IO to use `websocket` transport in dev mode so Engine.IO polling does not go through the Vite HTTP proxy path under Bun
 - shared components should live under `src/web/components/<component>/*`
 - component folder names should match the component name, for example `src/web/components/gl-button/*`
 - each component folder should include an `index.ts` that exports the component and any related public types or helpers from that folder
@@ -399,7 +403,7 @@ Rules:
 
 ### Test Style
 
-Use Bun's `test` function for tests.
+Use Vitest for tests.
 
 Rules:
 
@@ -409,9 +413,10 @@ Rules:
 - the test file already acts as the natural grouping boundary in most cases
 - app-side tests may continue to use `assert` when that keeps assertions simple and direct
 - web component and route tests should use `render` and `screen` from `@solidjs/testing-library`
+- web route tests should mount the route under a `MemoryRouter` with a single route entry so the component receives real routing context during the test
 - web component and route tests should prefer `expect` assertions so DOM-oriented matchers and helpers remain available
 - prefer explicit assertion messages when the failure would otherwise be unclear
-- prefer Bun's built-in `mock()` helpers for collaborator test doubles instead of hand-written ad hoc fake service objects when the test only needs call interception and simple stubbed behavior
+- prefer Vitest's `vi.fn()` helpers for collaborator test doubles instead of hand-written ad hoc fake service objects when the test only needs call interception and simple stubbed behavior
 - when building `createMock...()` helpers for tests, let the return type be inferred so the Vitest mock methods remain available for per-test setup and call assertions
 - when the same test-double shape is reused across multiple tests, extract it into a shared mock factory under the relevant test support folder instead of recreating the same mock object inline in each test
 
@@ -530,5 +535,3 @@ Examples:
 ## Documentation Rule
 
 When adding or updating feature docs, keep architectural examples aligned with this file. If a feature needs a different convention for a strong reason, document the exception explicitly in both the feature file and this file.
-
-

@@ -25,7 +25,7 @@ test('ProjectsRoute renders', async () => {
 
 	render(() => (
 		<MemoryRouter>
-			<Route path='/' component={() => <ProjectsRoute monitorApiClient={monitorApiClient} />} />
+			<Route path="/" component={() => <ProjectsRoute monitorApiClient={monitorApiClient} />} />
 		</MemoryRouter>
 	));
 

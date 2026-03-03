@@ -10,6 +10,8 @@ import { getBuildVersion } from '#src/shared/build';
 async function main(): Promise<void> {
 	const version = getBuildVersion();
 	const command = Bun.argv[2] ?? 'start';
+	const args = Bun.argv.slice(3);
+	const devMode = args.includes('--dev');
 	const runtime = await bootstrapMonitor();
 
 	switch (command) {
@@ -26,7 +28,7 @@ async function main(): Promise<void> {
 			return;
 		}
 		default: {
-			await handleMonitorStart(runtime);
+			await handleMonitorStart(runtime, version, devMode);
 			return;
 		}
 	}

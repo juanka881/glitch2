@@ -18,6 +18,6 @@ test('GlLogStream renders', async () => {
 			]}
 		/>
 	));
-	
+
 	expect(screen.getByText('listening')).toBeDefined();
 });

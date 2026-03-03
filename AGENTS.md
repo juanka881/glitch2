@@ -56,11 +56,15 @@ When implementing code:
 Common commands:
 
 ```sh
-bun run test
+bun run test:all
 bun run test:app
 bun run test:web
+bun run dev:web
 bun run check
-bun run format
+bun run fmt
 bun run lint
 ```
+
+
+
 

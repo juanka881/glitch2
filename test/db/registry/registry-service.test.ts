@@ -162,4 +162,3 @@ test('RegistryService records failure details in the registry agent row', () => 
 		db.close();
 	}
 });
-

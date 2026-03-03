@@ -97,10 +97,17 @@ export class MonitorEventSource {
 	}
 }
 
+function useWebSocketOnlyTransport(): boolean {
+	return import.meta.env.DEV;
+}
+
 export function createMonitorSocket(baseUrl?: string): Socket {
+	const transports = useWebSocketOnlyTransport() ? ['websocket'] : undefined;
+
 	return io(baseUrl ?? undefined, {
 		path: '/api/event',
 		autoConnect: true,
+		transports,
 	});
 }
 
