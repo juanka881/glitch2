@@ -9,13 +9,13 @@ Before making changes, identify the kind of work you are doing and open the matc
 - product or repository overview
   - read [`README.md`](./README.md)
 - implementation, architecture, code layout, schema conventions, testing rules, or TypeScript structure
-  - read [`architecture.md`](./architecture.md)
+  - read [`agents/architecture.md`](./agents/architecture.md)
 - feature planning or implementation details for a specific module
   - read [`features/README.md`](./features/README.md) and then the relevant feature file
 
 ## Source Of Truth
 
-For code work, [`architecture.md`](./architecture.md) is the primary source of truth.
+For code work, [`agents/architecture.md`](./agents/architecture.md) is the primary source of truth.
 
 It defines:
 
@@ -27,7 +27,7 @@ It defines:
 - testing expectations
 - JSON, event, and SQLite contract conventions
 
-If `AGENTS.md` and `architecture.md` ever disagree, follow `architecture.md`.
+If `AGENTS.md` and `agents/architecture.md` ever disagree, follow `agents/architecture.md`.
 
 ## Feature Documents
 
@@ -47,7 +47,7 @@ Use these when working on a specific feature or when a prompt references a modul
 When implementing code:
 
 1. read this file
-2. read [`architecture.md`](./architecture.md)
+2. read [`agents/architecture.md`](./agents/architecture.md)
 3. read the relevant feature document under [`features/`](./features/README.md)
 4. implement changes to match those documents
 
@@ -55,8 +55,8 @@ When implementing code:
 
 The repo keeps a running alignment process for correcting implementation drift.
 
-- use [`alignment.md`](./alignment.md) as the historical log of specific corrections and decisions
-- use [`architecture.md`](./architecture.md) for the generalized rules extracted from those corrections
+- use [`agents/alignment.md`](./agents/alignment.md) as the historical log of specific corrections and decisions
+- use [`agents/architecture.md`](./agents/architecture.md) for the generalized rules extracted from those corrections
 - when a correction establishes a reusable repo convention, update both files
 - add the specific case to `alignment.md` using `# Alignment (yyyy-mm-dd HH:mm): Title`
 - add the generalized rule to `architecture.md` so future work stays aligned without rereading the whole history
@@ -75,3 +75,4 @@ bun run check
 bun run fmt
 bun run lint
 ```
+
