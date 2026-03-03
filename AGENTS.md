@@ -51,6 +51,16 @@ When implementing code:
 3. read the relevant feature document under [`features/`](./features/README.md)
 4. implement changes to match those documents
 
+## Alignment Workflow
+
+The repo keeps a running alignment process for correcting implementation drift.
+
+- use [`alignment.md`](./alignment.md) as the historical log of specific corrections and decisions
+- use [`architecture.md`](./architecture.md) for the generalized rules extracted from those corrections
+- when a correction establishes a reusable repo convention, update both files
+- add the specific case to `alignment.md` using `# Alignment (yyyy-mm-dd HH:mm): Title`
+- add the generalized rule to `architecture.md` so future work stays aligned without rereading the whole history
+
 ## Tooling
 
 Common commands:
@@ -60,11 +70,8 @@ bun run test:all
 bun run test:app
 bun run test:web
 bun run dev:web
+bun run dev:agent
 bun run check
 bun run fmt
 bun run lint
 ```
-
-
-
-

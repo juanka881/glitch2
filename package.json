@@ -12,6 +12,7 @@
     "fmt": "biome format --write",
     "lint": "biome lint --write",
     "dev:web": "bun run ./scripts/dev-web.ts",
+    "dev:agent": "bun run ./src/agent/main.ts",
     "web:build": "vite",
     "web:preview": "vite preview",
     "make:agent": "bun run ./scripts/make.ts ./src/agent/main.ts ./dist/glx",

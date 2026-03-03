@@ -535,3 +535,11 @@ Examples:
 ## Documentation Rule
 
 When adding or updating feature docs, keep architectural examples aligned with this file. If a feature needs a different convention for a strong reason, document the exception explicitly in both the feature file and this file.
+
+When a user correction establishes a reusable convention:
+
+- record the specific correction in [`alignment.md`](./alignment.md)
+- record the generalized rule in this file
+- treat `alignment.md` as historical context and this file as the curated best-practice layer
+
+
