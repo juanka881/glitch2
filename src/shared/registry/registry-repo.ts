@@ -125,6 +125,12 @@ export class RegistryRepo {
 		return new ProjectModel(row);
 	}
 
+	listProjects(): ProjectModel[] {
+		const rows = this.db.all<ProjectRow>('SELECT * FROM projects ORDER BY name ASC, cwd ASC');
+
+		return rows.map((row) => new ProjectModel(row));
+	}
+
 	createAgent(input: CreateRegistryAgentInput): RegistryAgentModel {
 		this.db.run(
 			`
@@ -205,6 +211,32 @@ export class RegistryRepo {
 				...row,
 				error: row.error ? JSON.parse(row.error) : null,
 			});
+		});
+	}
+
+	listAgentsByProjectId(projectId: string): RegistryAgentModel[] {
+		const rows = this.db.all<RegistryAgentRow>('SELECT * FROM agents WHERE project_id = ? ORDER BY start_date DESC', [
+			projectId,
+		]);
+
+		return rows.map((row) => {
+			return new RegistryAgentModel({
+				...row,
+				error: row.error ? JSON.parse(row.error) : null,
+			});
+		});
+	}
+
+	findAgentById(id: string): RegistryAgentModel | null {
+		const row = this.db.get<RegistryAgentRow>('SELECT * FROM agents WHERE id = ?', [id]);
+
+		if (!row) {
+			return null;
+		}
+
+		return new RegistryAgentModel({
+			...row,
+			error: row.error ? JSON.parse(row.error) : null,
 		});
 	}
 

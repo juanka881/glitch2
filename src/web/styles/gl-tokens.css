@@ -1,0 +1,34 @@
+:root {
+	--gl-space-1: 0.25rem;
+	--gl-space-2: 0.5rem;
+	--gl-space-3: 0.75rem;
+	--gl-space-4: 1rem;
+	--gl-space-5: 1.5rem;
+	--gl-space-6: 2rem;
+	--gl-font-family: "IBM Plex Mono", "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+	--gl-font-size-1: 0.75rem;
+	--gl-font-size-2: 0.875rem;
+	--gl-font-size-3: 1rem;
+	--gl-font-size-4: 1.25rem;
+	--gl-line-1: 1.2;
+	--gl-line-2: 1.4;
+	--gl-color-bg: #f4f5ef;
+	--gl-color-bg-panel: #fafaf6;
+	--gl-color-bg-panel-strong: #eef2ea;
+	--gl-color-bg-code: #e4eadf;
+	--gl-color-text: #111512;
+	--gl-color-text-muted: #5b665e;
+	--gl-color-border: #1b211c;
+	--gl-color-grid: #bcc7bd;
+	--gl-color-accent: #17c08a;
+	--gl-color-accent-strong: #0f8f67;
+	--gl-color-warning: #df8a1d;
+	--gl-color-error: #c4442b;
+	--gl-color-info: #1676d1;
+	--gl-color-stream-out: #6c756f;
+	--gl-color-stream-err: #c4442b;
+	--gl-border-width-1: 1px;
+	--gl-border-width-2: 2px;
+	--gl-size-sidebar: 16rem;
+	--gl-size-content: 96rem;
+}

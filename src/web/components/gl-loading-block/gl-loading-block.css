@@ -1,0 +1,19 @@
+.gl-loading-block {
+	display: flex;
+	align-items: center;
+	gap: var(--gl-space-3);
+	padding: var(--gl-space-3);
+	border: var(--gl-border-width-1) solid var(--gl-color-grid);
+}
+
+.gl-loading-block_bar {
+	display: inline-block;
+	width: 3rem;
+	height: 0.5rem;
+	background: linear-gradient(90deg, var(--gl-color-accent), transparent);
+}
+
+.gl-loading-block_label {
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}

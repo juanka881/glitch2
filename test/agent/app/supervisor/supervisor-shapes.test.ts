@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { ProcessDefinition } from '#src/agent/app/supervisor/supervisor-shapes';
 
 test('ProcessDefinition constructs from valid fields', () => {
@@ -27,3 +27,4 @@ test('ProcessDefinition rejects invalid fields', () => {
 		'ProcessDefinition must reject invalid data',
 	);
 });
+

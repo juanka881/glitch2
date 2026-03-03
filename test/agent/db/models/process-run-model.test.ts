@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { ProcessRunModel } from '#src/db/agent/models/process-run-model';
 
 test('ProcessRunModel constructs from valid fields', () => {
@@ -39,3 +39,4 @@ test('ProcessRunModel rejects invalid fields', () => {
 		'ProcessRunModel must reject invalid data',
 	);
 });
+

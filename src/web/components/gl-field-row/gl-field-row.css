@@ -1,0 +1,16 @@
+.gl-field-row {
+	display: grid;
+	grid-template-columns: minmax(6rem, 9rem) 1fr;
+	gap: var(--gl-space-2);
+	align-items: baseline;
+}
+
+.gl-field-row_label {
+	color: var(--gl-color-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.gl-field-row_value {
+	min-width: 0;
+}

@@ -1,6 +1,6 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod';
+import * as z from 'zod';
 import { ProcessDefinition } from '#src/agent/app/supervisor/supervisor-shapes';
 
 const processConfigSchema = z.object({

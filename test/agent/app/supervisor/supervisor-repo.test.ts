@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { AgentRunStatus, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
 import { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
 import { migrations } from '#src/db/agent/migrations';
@@ -228,3 +228,4 @@ test('SupervisorRepo.listProcessRunsByAgentRunId returns ordered process runs', 
 		db.close();
 	}
 });
+

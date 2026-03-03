@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { RegistryAgentModel } from '#src/db/registry/models/registry-agent-model';
 
 test('RegistryAgentModel constructs from valid fields', () => {
@@ -37,3 +37,4 @@ test('RegistryAgentModel rejects invalid fields', () => {
 		'RegistryAgentModel must reject invalid data',
 	);
 });
+

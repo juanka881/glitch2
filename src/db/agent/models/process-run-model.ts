@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 import { ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
 
 const processStatusSchema = z.enum(ProcessStatus);

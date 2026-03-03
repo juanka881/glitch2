@@ -1,0 +1,24 @@
+.gl-agent-detail-route_stack,
+.gl-agent-detail-route_meta,
+.gl-agent-detail-route_stream {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-4);
+}
+
+.gl-agent-detail-route_stream-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gl-space-3);
+}
+
+.gl-agent-detail-route_process-link {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--gl-color-info);
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
+}

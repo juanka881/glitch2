@@ -46,7 +46,7 @@ export async function handleMonitorStop(runtime: BootstrapMonitorRuntime): Promi
 }
 
 export async function handleMonitorServe(runtime: BootstrapMonitorRuntime, version: string): Promise<void> {
-	await runtime.monitor.serve(version);
+	await runtime.monitor.serve(version, runtime.query);
 }
 
 function printRunningStatus(pid: number, baseUrl: string, healthy: boolean): void {

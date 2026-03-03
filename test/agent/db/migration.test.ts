@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { migrations } from '#src/db/agent/migrations';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
@@ -39,3 +39,4 @@ test('applyMigrations is idempotent', () => {
 		db.close();
 	}
 });
+

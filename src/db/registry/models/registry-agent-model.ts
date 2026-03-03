@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 import { type RegistryAgentStatus, registryAgentStatusSchema } from '#src/shared/registry/registry-shapes';
 
 const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>

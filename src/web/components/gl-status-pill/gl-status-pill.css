@@ -1,0 +1,22 @@
+.gl-status-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.125rem var(--gl-space-2);
+	border: var(--gl-border-width-1) solid var(--gl-color-border);
+	background: var(--gl-color-bg-panel);
+	font-size: var(--gl-font-size-1);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.gl-status-pill.tone-running {
+	background: color-mix(in srgb, var(--gl-color-accent) 18%, white);
+}
+
+.gl-status-pill.tone-warning {
+	background: color-mix(in srgb, var(--gl-color-warning) 18%, white);
+}
+
+.gl-status-pill.tone-error {
+	background: color-mix(in srgb, var(--gl-color-error) 18%, white);
+}

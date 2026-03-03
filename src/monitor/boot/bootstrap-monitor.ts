@@ -6,8 +6,10 @@ import {
 	NodeMonitorProcessManager,
 	type MonitorProcessManager,
 } from '#src/monitor/app/monitor/monitor-process-manager';
+import { MonitorQueryService } from '#src/monitor/app/monitor/monitor-query-service';
 import { MonitorRepo } from '#src/monitor/app/monitor/monitor-repo';
 import { MonitorService } from '#src/monitor/app/monitor/monitor-service';
+import { AgentDbService } from '#src/shared/agent-db/agent-db-service';
 import { RegistryRepo } from '#src/shared/registry/registry-repo';
 import { RegistryService } from '#src/shared/registry/registry-service';
 import { ensureGlitchHome } from '#src/shared/utils/glitch-home';
@@ -17,7 +19,9 @@ export interface BootstrapMonitorRuntime {
 	processManager: MonitorProcessManager;
 	registry: RegistryService;
 	registryDb: DbClient;
+	agentDb: AgentDbService;
 	monitor: MonitorService;
+	query: MonitorQueryService;
 }
 
 export async function bootstrapMonitor(glitchHome?: string): Promise<BootstrapMonitorRuntime> {
@@ -32,12 +36,16 @@ export async function bootstrapMonitor(glitchHome?: string): Promise<BootstrapMo
 	const monitorRepo = new MonitorRepo(resolvedGlitchHome);
 	const processManager = new NodeMonitorProcessManager();
 	const monitor = new MonitorService(monitorRepo, registry, processManager);
+	const agentDb = new AgentDbService();
+	const query = new MonitorQueryService(monitor, registry, agentDb);
 
 	return {
 		glitchHome: resolvedGlitchHome,
 		processManager,
 		registry,
 		registryDb,
+		agentDb,
 		monitor,
+		query,
 	};
 }

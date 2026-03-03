@@ -13,6 +13,10 @@ export class DbClient {
 		return new DbClient(new Database(path, { create: true, strict: true }));
 	}
 
+	static openReadonly(path: string): DbClient {
+		return new DbClient(new Database(path, { readonly: true, strict: true }));
+	}
+
 	static memory(): DbClient {
 		return new DbClient(new Database(':memory:', { create: true, strict: true }));
 	}

@@ -1,0 +1,26 @@
+.gl-data-grid {
+	overflow: auto;
+}
+
+.gl-data-grid_table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.gl-data-grid_row {
+	border-bottom: var(--gl-border-width-1) solid var(--gl-color-grid);
+}
+
+.gl-data-grid_cell {
+	padding: var(--gl-space-2) var(--gl-space-3);
+	text-align: left;
+	vertical-align: top;
+}
+
+.gl-data-grid_cell.type-header {
+	color: var(--gl-color-text-muted);
+	font-size: var(--gl-font-size-1);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}

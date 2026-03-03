@@ -132,6 +132,26 @@ export class RegistryService {
 	markCrashedAgents(cutoffDate: string, crashDate: string): void {
 		this.repo.markStaleAgentsAsCrash(cutoffDate, crashDate);
 	}
+
+	getProjectById(projectId: string): ProjectModel | null {
+		return this.repo.getProjectById(projectId);
+	}
+
+	listProjects(): ProjectModel[] {
+		return this.repo.listProjects();
+	}
+
+	getAgentById(agentId: string): RegistryAgentModel | null {
+		return this.repo.findAgentById(agentId);
+	}
+
+	listAgents(): RegistryAgentModel[] {
+		return this.repo.listAgents();
+	}
+
+	listAgentsByProjectId(projectId: string): RegistryAgentModel[] {
+		return this.repo.listAgentsByProjectId(projectId);
+	}
 }
 
 function hashCwd(cwd: string): string {

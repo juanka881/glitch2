@@ -1,0 +1,10 @@
+.gl-project-detail-route_meta,
+.gl-project-detail-route_latest {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-2);
+}
+
+.gl-project-detail-route_agents {
+	margin-top: var(--gl-space-4);
+}

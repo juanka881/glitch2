@@ -1,0 +1,13 @@
+.gl-empty-state {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-2);
+	padding: var(--gl-space-4);
+	border: var(--gl-border-width-1) dashed var(--gl-color-grid);
+	background: color-mix(in srgb, var(--gl-color-bg-panel) 80%, white);
+}
+
+.gl-empty-state_title,
+.gl-empty-state_message {
+	margin: 0;
+}

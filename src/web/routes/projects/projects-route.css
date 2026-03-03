@@ -1,0 +1,4 @@
+.gl-projects-route {
+	display: flex;
+	flex-direction: column;
+}

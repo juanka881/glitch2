@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { DbClient } from '#src/db/client';
 import { Migrator } from '#src/db/migration';
 import { migrations } from '#src/db/registry/migrations';
@@ -162,3 +162,4 @@ test('RegistryService records failure details in the registry agent row', () => 
 		db.close();
 	}
 });
+

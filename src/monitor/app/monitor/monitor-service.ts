@@ -1,8 +1,16 @@
 import { getLogger, type Logger } from '@logtape/logtape';
+import { Server as BunEngineServer } from '@socket.io/bun-engine';
+import type { Hono } from 'hono';
+import { Server as SocketServer } from 'socket.io';
+import type { MonitorQueryService } from '#src/monitor/app/monitor/monitor-query-service';
 import type { MonitorProcessManager } from '#src/monitor/app/monitor/monitor-process-manager';
 import type { MonitorRepo } from '#src/monitor/app/monitor/monitor-repo';
+import { createMonitorRouter } from '#src/monitor/app/monitor/api/monitor-router';
 import { MonitorLock, MonitorStatus } from '#src/monitor/app/monitor/monitor-shapes';
+import { MonitorStreamService } from '#src/monitor/app/monitor/monitor-stream-service';
+import { EventBus } from '#src/shared/events/event-bus';
 import type { RegistryService } from '#src/shared/registry/registry-service';
+import { createApiApp } from '#src/shared/utils/http';
 import { isAbortError } from '#src/shared/utils/error';
 import { wait } from '#src/shared/utils/promise';
 import { reserveBaseUrl } from '#src/shared/utils/base-url';
@@ -14,6 +22,8 @@ const MONITOR_STOP_POLL_MS = 250;
 const MONITOR_CLEANUP_INTERVAL_MS = 180_000;
 const MONITOR_START_POLL_ATTEMPTS = 18;
 const MONITOR_START_POLL_MS = 100;
+const MONITOR_EVENT_PATH = '/api/event';
+const MONITOR_STREAM_BUFFER_SIZE = 100;
 
 export class MonitorService {
 	private readonly repo: MonitorRepo;
@@ -158,7 +168,7 @@ export class MonitorService {
 		return true;
 	}
 
-	async serve(version: string): Promise<void> {
+	async serve(version: string, query: MonitorQueryService): Promise<void> {
 		const monitorLock = await this.acquireLock(version);
 
 		if (!monitorLock) {
@@ -167,7 +177,21 @@ export class MonitorService {
 		}
 
 		const monitorUrl = new URL(monitorLock.base_url);
-		const server = this.createServer(monitorUrl);
+		const io = new SocketServer({
+			path: MONITOR_EVENT_PATH,
+			serveClient: false,
+		});
+		const engine = new BunEngineServer({
+			path: MONITOR_EVENT_PATH,
+		});
+		const eventBus = new EventBus(io);
+		const streamService = new MonitorStreamService(eventBus, MONITOR_STREAM_BUFFER_SIZE);
+		const app = this.createApp(query, streamService);
+		const server = this.createServer(monitorUrl, app, engine);
+
+		io.bind(engine);
+		eventBus.bind();
+
 		const cleanupTimer = setInterval(() => {
 			const crashDate = new Date().toISOString();
 			const cutoffDate = new Date(Date.now() - MONITOR_CLEANUP_INTERVAL_MS).toISOString();
@@ -190,6 +214,10 @@ export class MonitorService {
 			server.stop(true);
 		});
 
+		shutdownManager.register('close socket server', async () => {
+			await io.close();
+		});
+
 		shutdownManager.register('remove monitor lock', async () => {
 			await this.repo.removeLock();
 		});
@@ -206,32 +234,33 @@ export class MonitorService {
 		this.processManager.openBrowser(url);
 	}
 
-	private createServer(monitorUrl: URL): Bun.Server<undefined> {
+	private createApp(query: MonitorQueryService, stream: MonitorStreamService): Hono {
+		const app = createApiApp('glitch-monitor');
+		const monitorRouter = createMonitorRouter({
+			query,
+			stream,
+		});
+
+		app.route('/', monitorRouter);
+		return app;
+	}
+
+	private createServer(monitorUrl: URL, app: Hono, engine: BunEngineServer) {
+		const engineHandler = engine.handler();
+
 		return Bun.serve({
 			hostname: monitorUrl.hostname,
 			port: Number(monitorUrl.port),
-			fetch(request) {
+			websocket: engineHandler.websocket,
+			async fetch(request, server) {
 				const requestUrl = new URL(request.url);
 				const requestPath = requestUrl.pathname;
 
-				if (requestPath === '/health') {
-					return Response.json({
-						name: 'glitch-monitor',
-						status: 'running',
-					});
+				if (requestPath.startsWith(MONITOR_EVENT_PATH)) {
+					return engine.handleRequest(request, server);
 				}
 
-				const responseBody = {
-					name: 'glitch-monitor',
-					status: 'running',
-					url: request.url,
-				};
-
-				return new Response(JSON.stringify(responseBody), {
-					headers: {
-						'content-type': 'application/json',
-					},
-				});
+				return app.fetch(request);
 			},
 		});
 	}

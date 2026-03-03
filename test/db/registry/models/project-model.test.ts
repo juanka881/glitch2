@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { ProjectModel } from '#src/db/registry/models/project-model';
 
 test('ProjectModel constructs from valid fields', () => {
@@ -31,3 +31,4 @@ test('ProjectModel rejects invalid fields', () => {
 		'ProjectModel must reject invalid data',
 	);
 });
+

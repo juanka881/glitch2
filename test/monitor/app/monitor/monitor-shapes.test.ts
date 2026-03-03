@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { MonitorLock, MonitorStatus } from '#src/monitor/app/monitor/monitor-shapes';
 
 test('MonitorLock constructs from valid fields', () => {
@@ -51,3 +51,4 @@ test('MonitorStatus rejects invalid fields', () => {
 		'MonitorStatus must reject invalid data',
 	);
 });
+

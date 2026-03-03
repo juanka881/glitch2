@@ -1,0 +1,43 @@
+.gl-log-stream {
+	overflow: auto;
+	max-height: 32rem;
+	border: var(--gl-border-width-1) solid var(--gl-color-grid);
+}
+
+.gl-log-stream_table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.gl-log-stream_row {
+	border-bottom: var(--gl-border-width-1) solid var(--gl-color-grid);
+}
+
+.gl-log-stream_cell {
+	padding: var(--gl-space-2);
+	text-align: left;
+	vertical-align: top;
+}
+
+.gl-log-stream_cell.type-header {
+	color: var(--gl-color-text-muted);
+	font-size: var(--gl-font-size-1);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.gl-log-stream_cell.type-process,
+.gl-log-stream_cell.type-stream {
+	width: 6rem;
+	white-space: nowrap;
+}
+
+.gl-log-stream_row.stream-stderr .gl-log-stream_cell.type-stream {
+	color: var(--gl-color-error);
+}
+
+.gl-log-stream_cell.type-line {
+	white-space: pre-wrap;
+	word-break: break-word;
+}

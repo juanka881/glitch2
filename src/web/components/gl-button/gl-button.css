@@ -1,0 +1,22 @@
+.gl-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gl-space-2);
+	padding: var(--gl-space-2) var(--gl-space-3);
+	border: var(--gl-border-width-2) solid var(--gl-color-border);
+	background: var(--gl-color-bg-panel);
+	color: var(--gl-color-text);
+	cursor: pointer;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.gl-button.tone-accent {
+	background: var(--gl-color-accent);
+	color: #07110d;
+}
+
+.gl-button.size-large {
+	padding: var(--gl-space-3) var(--gl-space-4);
+}

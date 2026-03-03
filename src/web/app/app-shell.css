@@ -1,0 +1,62 @@
+.gl-app-shell {
+	display: grid;
+	grid-template-columns: var(--gl-size-sidebar) minmax(0, 1fr);
+	min-height: 100vh;
+}
+
+.gl-app-shell_sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-5);
+	padding: var(--gl-space-4);
+	border-right: var(--gl-border-width-2) solid var(--gl-color-border);
+	background: color-mix(in srgb, var(--gl-color-bg-panel-strong) 90%, white);
+}
+
+.gl-app-shell_brand {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-1);
+}
+
+.gl-app-shell_name,
+.gl-app-shell_tag,
+.gl-app-shell_link {
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+}
+
+.gl-app-shell_tag {
+	color: var(--gl-color-text-muted);
+}
+
+.gl-app-shell_nav {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-2);
+}
+
+.gl-app-shell_link {
+	padding: var(--gl-space-2);
+	border: var(--gl-border-width-1) solid transparent;
+}
+
+.gl-app-shell_link.active {
+	border-color: var(--gl-color-border);
+	background: var(--gl-color-bg-panel);
+}
+
+.gl-app-shell_content {
+	padding: var(--gl-space-4);
+}
+
+@media (max-width: 960px) {
+	.gl-app-shell {
+		grid-template-columns: 1fr;
+	}
+
+	.gl-app-shell_sidebar {
+		border-right: 0;
+		border-bottom: var(--gl-border-width-2) solid var(--gl-color-border);
+	}
+}

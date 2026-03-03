@@ -1,0 +1,16 @@
+.gl-split-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+	gap: var(--gl-space-3);
+	align-items: start;
+}
+
+.gl-split-layout_pane {
+	min-width: 0;
+}
+
+@media (max-width: 960px) {
+	.gl-split-layout {
+		grid-template-columns: 1fr;
+	}
+}

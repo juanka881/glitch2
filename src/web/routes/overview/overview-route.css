@@ -1,0 +1,18 @@
+.gl-overview-route_stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-4);
+}
+
+.gl-overview-route_monitor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gl-space-3);
+}
+
+.gl-overview-route_meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gl-space-3);
+	color: var(--gl-color-text-muted);
+}

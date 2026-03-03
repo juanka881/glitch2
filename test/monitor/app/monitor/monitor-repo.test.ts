@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { MonitorRepo } from '#src/monitor/app/monitor/monitor-repo';
 import { MonitorLock } from '#src/monitor/app/monitor/monitor-shapes';
 
@@ -98,3 +98,4 @@ test('MonitorRepo returns undefined for an incomplete lock file', async () => {
 		await fsp.rm(tempDir, { recursive: true, force: true });
 	}
 });
+

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 import { AgentRunStatus } from '#src/agent/app/supervisor/supervisor-shapes';
 
 const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>

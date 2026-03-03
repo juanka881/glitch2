@@ -69,10 +69,21 @@ Expected structure:
 Rules:
 
 - the web app should use SolidJS and `@solidjs/router`
+- Vitest web-project config should enable `test.server.deps.inline = true` so SolidJS-related modules are transformed correctly by the Vite/Solid pipeline during tests
 - route files should be organized to mirror URL structure so it is obvious which file maps to which route
 - shared components should live under `src/web/components/<component>/*`
+- component folder names should match the component name, for example `src/web/components/gl-button/*`
+- each component folder should include an `index.ts` that exports the component and any related public types or helpers from that folder
 - component-local CSS should be colocated with the component or route it styles
 - `src/web/styles/*` should be reserved for truly global web styles such as tokens, resets, and app-wide base rules
+- do not add per-file `@jsxImportSource` directives when the TypeScript config already defines the JSX import source
+- export component prop interfaces so the component folder's `index.ts` can re-export the full public surface cleanly
+- use one underscore as the separator for component part class names, for example `gl-app-shell_sidebar`; keep modifiers on the component class such as `.gl-button.size-large`
+- use semantic HTML elements when the data is naturally structured that way; tabular data should use `table`, `thead`, `tbody`, `tr`, `th`, and `td` instead of recreating table semantics with `div`s
+- for larger composed components, prefer explicit child part components over multiple `JSX.Element` props when that keeps the callsite easier to read
+- for single-slot content such as field values, prefer `props.children` instead of passing JSX through a named prop
+- avoid inline object type annotations for component or helper props; define a named `interface` so the callsite and function signature stay easy to scan
+- when resolving slotted children for composed components, compute shared derived child collections once and reuse them instead of repeating the same child-to-array conversion in multiple memos or predicates
 
 ## Runtime Feature Module Layout
 
@@ -113,15 +124,21 @@ When a runtime feature exposes API routes, keep the API code inside that feature
 
 Expected structure:
 
-- `src/<runtime>/app/<feature>/api/router.ts`
-- `src/<runtime>/app/<feature>/api/api-shapes.ts`
-- `src/<runtime>/app/<feature>/api/event-shapes.ts`
+- `src/<runtime>/app/<feature>/api/<feature>-router.ts`
+- `src/<runtime>/app/<feature>/api/<feature>-api-shapes.ts`
 - `src/<runtime>/app/<feature>/api/handlers/*`
 
 Rules:
 
-- `router.ts` should export a `create<Feature>Router(...)` function such as `createMonitorRouter(...)`
+- `<feature>-router.ts` should export a `create<Feature>Router(...)` function such as `createMonitorRouter(...)`
+- `<feature>-api-shapes.ts` should contain the typed API input and output contracts for that feature
 - pass required dependencies into the router factory explicitly
+- use Hono for HTTP routing and middleware composition instead of building custom Bun routing layers
+- the router factory should create and return a `Hono` app instance with the feature routes registered on it
+- use `createApiApp(...)` for shared app-level middleware and the shared `/health` route
+- feature routers should mount onto the shared app and should not redefine app-level routes such as `/health`
+- mount feature routers into the runtime's main app with `app.route('/', createMonitorRouter(deps))`
+- Bun remains the underlying server, but `Bun.serve()` should delegate normal HTTP handling to `app.fetch(...)`
 - use one handler file per endpoint action
 - do not group multiple endpoint actions into a single handler file
 - each handler should treat HTTP as a transport only:
@@ -131,7 +148,7 @@ Rules:
   - create output object
   - write output to the response
 - route handlers should not perform business logic directly when a feature service already owns that behavior
-- shared HTTP response helpers such as JSON success and error writers should live under shared utilities instead of being duplicated
+- common HTTP concerns such as error handling and app-level middleware should live in shared Hono helpers instead of being repeated in each handler
 
 Naming rules:
 
@@ -146,6 +163,10 @@ Transport shape rules:
 - use input and output record classes for endpoint contracts
 - validate API contracts with Zod and data classes before the handler uses them
 - keep API DTOs separate from internal feature shapes when the transport contract differs
+- do not add converter helpers that only call `new DtoType(model)`; instantiate the DTO directly unless real translation logic exists
+- for IO-bound contract shapes such as DB models, API DTOs, config objects, and event payloads, declare the full object shape explicitly
+- for nullable contract fields, use `type | null` instead of optional `?` so the property is always present on the object even when empty
+- reserve optional `property?: type` shapes for internal in-memory helper objects where `undefined` is the natural representation
 
 ## Socket Layout
 
@@ -156,7 +177,9 @@ Rules:
 - use a shared app-level event endpoint such as `/api/event`
 - use Socket.IO as the high-level transport layer
 - keep Socket.IO integration behind a shared `EventBus` abstraction instead of coupling features directly to `io`
-- `event-shapes.ts` should define the emitted transport event contracts for that feature
+- `EventBus` should rely on Socket.IO room membership directly instead of duplicating subscription tracking in custom collections
+- shared event contracts, room helpers, and subscribe or unsubscribe shapes should live under `src/shared/events/*`
+- event messages should use a validated `name` + `body` shape
 - the UI should talk only to monitor-hosted sockets; the monitor may internally subscribe to agent events and forward them transparently
 
 Room naming rules:
@@ -170,6 +193,10 @@ Client wrapper rules:
 
 - browser-side socket consumption should be wrapped in typed event-source classes instead of raw callback wiring
 - browser-side API clients should stay separate from browser-side event sources
+- event-source wrappers should take a socket instance as a dependency; helper functions may create a convenience instance, but socket creation should stay a higher-level concern
+- keep room subscription methods separate from event handler registration methods so callers can control what rooms they are joined to and what callbacks they attach
+- reuse one socket connection per app where practical instead of creating a new socket for each event-source consumer
+- when event-source wrappers track callback wrappers for typed parsing, prefer one shared callback-to-wrapper map keyed by callback identity instead of one map per event type unless different lifecycle behavior is actually needed
 
 ## Database Layout
 
@@ -269,6 +296,9 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - use `snake_case` only for JSON payload fields, database column names, and DTO or model properties that mirror persisted contract names
 - prefer singular class names such as `SupervisorService`, `LoggerRepo`, and `AgentRunModel`
 - prefer equivalent naming in monitor code such as `RegistryService`, `MonitorServerService`, and `RegistryAgentModel`
+- prefer `interface` for object-shaped contracts
+- reserve `type` for unions, function aliases, mapped types, conditional types, and other advanced composition cases where `interface` is not the right fit
+- when using `type` aliases, terminate the declaration with a semicolon so the alias reads like a completed statement
 - when there are two or more variables of the same kind in scope, use consistent descriptive names such as `agentMigrator` and `registryMigrator` instead of mixing a generic name with a specific one
 - group related lines together and use blank lines to separate distinct phases of logic
 
@@ -319,11 +349,14 @@ These conventions apply to both agent and monitor code unless a runtime-specific
 - keep boot functions focused on constructing runtime dependencies; avoid hidden domain-side side effects such as creating registry rows during bootstrap
 - exported functions and public methods should declare explicit return types instead of relying on inference
 - prefer built-in platform types directly when they already exist; do not reach for `ReturnType<...>` when the runtime or standard library already provides a clearer type
+- do not mirror framework or library types with local "minimal cut" interfaces when the real type is already available; import and use the library type directly
+- do not use the broad `Function` type; define an explicit callback shape or a constrained callback union that matches the code's actual usage
 - avoid dense inline transformations that are hard to scan
 - when a mapping or conversion has real logic, assign it to a local variable before returning
 - avoid reconstructing the same object shape just to pass it into a constructor again
 - when a callsite becomes hard to scan, break it into intermediate variables instead of nesting transformations inline
 - prefer extracting non-trivial event payloads into named variables before passing them into `emit(...)`
+- do not extract tiny generic helpers that hide straightforward wrapper-building logic unless they reduce real repetition without increasing abstraction cost
 - do not introduce artificial forever-waits such as unresolved promises just to keep a runtime alive; if the server or timer keeps the process alive naturally, return after setup
 - avoid unconditional endless loops when a real runtime condition already exists; prefer loops such as `while (isAlive)` and keep timeout checks inside the loop body
 - if runtime structure or lifecycle behavior is unclear, stop and ask instead of inventing control-flow on a hunch
@@ -370,11 +403,17 @@ Use Bun's `test` function for tests.
 
 Rules:
 
+- use `test`, `expect`, and `vi` from `vitest` as needed
 - name test files after the source file they cover, for example `supervisor-service.test.ts` or `registry-service.test.ts`
 - prefer flat tests and avoid nesting or grouping unless it is genuinely necessary
 - the test file already acts as the natural grouping boundary in most cases
-- use `assert` style assertions instead of `expect`
+- app-side tests may continue to use `assert` when that keeps assertions simple and direct
+- web component and route tests should use `render` and `screen` from `@solidjs/testing-library`
+- web component and route tests should prefer `expect` assertions so DOM-oriented matchers and helpers remain available
 - prefer explicit assertion messages when the failure would otherwise be unclear
+- prefer Bun's built-in `mock()` helpers for collaborator test doubles instead of hand-written ad hoc fake service objects when the test only needs call interception and simple stubbed behavior
+- when building `createMock...()` helpers for tests, let the return type be inferred so the Vitest mock methods remain available for per-test setup and call assertions
+- when the same test-double shape is reused across multiple tests, extract it into a shared mock factory under the relevant test support folder instead of recreating the same mock object inline in each test
 
 Examples:
 
@@ -491,3 +530,5 @@ Examples:
 ## Documentation Rule
 
 When adding or updating feature docs, keep architectural examples aligned with this file. If a feature needs a different convention for a strong reason, document the exception explicitly in both the feature file and this file.
+
+

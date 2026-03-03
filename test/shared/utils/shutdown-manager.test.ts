@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { ShutdownManager } from '#src/shared/utils/shutdown-manager';
 
 test('ShutdownManager runs cleanup steps and exits with the provided code', async () => {
@@ -71,3 +71,4 @@ test('ShutdownManager forwards the provided error to callbacks and exit handling
 	assert(callbackError === error, 'shutdown callbacks must receive the provided error');
 	assert(exitError === error, 'shutdown exit callback must receive the provided error');
 });
+

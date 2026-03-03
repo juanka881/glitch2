@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import type { MonitorProcessManager } from '#src/monitor/app/monitor/monitor-process-manager';
 import { MonitorRepo } from '#src/monitor/app/monitor/monitor-repo';
 import { MonitorService } from '#src/monitor/app/monitor/monitor-service';
@@ -151,3 +151,4 @@ test('MonitorService stop removes the lock for a live monitor', async () => {
 		await fsp.rm(tempDir, { recursive: true, force: true });
 	}
 });
+

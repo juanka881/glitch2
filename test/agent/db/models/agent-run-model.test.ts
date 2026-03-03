@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { AgentRunModel } from '#src/db/agent/models/agent-run-model';
 
 test('AgentRunModel constructs from valid fields', () => {
@@ -35,3 +35,4 @@ test('AgentRunModel rejects invalid fields', () => {
 		'AgentRunModel must reject invalid data',
 	);
 });
+

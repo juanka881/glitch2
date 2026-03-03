@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
-import { test } from 'bun:test';
+import { test } from 'vitest';
 import { AgentRunStatus, ProcessDefinition, ProcessStatus } from '#src/agent/app/supervisor/supervisor-shapes';
 import { SupervisorRepo } from '#src/agent/app/supervisor/supervisor-repo';
 import { SupervisorService } from '#src/agent/app/supervisor/supervisor-service';
@@ -218,3 +218,4 @@ test('SupervisorService shutdown records agent exit status', async () => {
 		db.close();
 	}
 });
+
