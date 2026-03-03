@@ -15,6 +15,8 @@ Glitch is a local developer tool that gives developers a single pane of glass fo
 
 It is designed to help you run local processes and inspect everything they produce in one place: logs, errors, requests, events, and, over time, metrics and database access.
 
+![Project Overview](./docs/images/screenshot1.png)
+
 ## Overview
 
 Glitch is split into three runtime components:
